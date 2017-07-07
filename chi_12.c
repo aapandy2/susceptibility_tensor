@@ -30,7 +30,7 @@ double MJ(struct params * params)
 	return ans;
 }
 
-double K_12_integrand(double tau_prime, void * parameters)
+double chi_12_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
 
@@ -96,7 +96,7 @@ double tau_integrator_12(double gamma, void * parameters)
 	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
 	gsl_set_error_handler_off();
 	gsl_function F;
-	F.function = &K_12_integrand;
+	F.function = &chi_12_integrand;
 	F.params   = params;
 
 	int i            = 0;
@@ -129,40 +129,7 @@ double tau_integrator_12(double gamma, void * parameters)
 	return ans_tot * sign_correction;
 }
 
-double start_search_12(struct params * params)
-{
-	double tolerance = 0.1;
-	double step      = 0.1;
-	double gamma     = 1.0;
-	double diff      = tolerance + 10.;
-
-	/* describe this later */
-	if(params->omega/params->omega_c < 10.)
-	{
-		return 1.;
-	}
-
-
-	double fac1 = 0.;
-	double fac2 = 0.;
-	while(diff > tolerance)
-	{
-		params->resolution_factor = 1;
-		fac1 = tau_integrator_12(gamma, params); //need to set res_factor to 1 here
-		params->resolution_factor = 2;
-		fac2 = tau_integrator_12(gamma, params); //need to set res_factor to 2 here
-		if(fac1 != 0. && fac2 != 0.)
-		{
-			diff = fabs((fac2 - fac1)/fac2);
-		}
-	gamma += step;
-	}
-	//last iteration of while loop takes 1 step after finding correct answer
-	//so we subtract that off
-	return (gamma - step);
-}
-
-double K_12(struct params * p)
+double chi_12(struct params * p)
 {
 	double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
 	
@@ -192,7 +159,7 @@ double K_12(struct params * p)
 	return prefactor * ans;
 }
 
-double K_21(struct params * p)
+double chi_21(struct params * p)
 {
-	return -K_12(p);
+	return -chi_12(p);
 }

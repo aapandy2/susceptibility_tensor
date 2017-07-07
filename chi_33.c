@@ -35,7 +35,7 @@ double I_3_limit(double alpha, double delta)
         return ans;
 }
 
-double K_33_integrand(double tau_prime, void * parameters)
+double chi_33_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
 
@@ -124,7 +124,7 @@ double tau_integrator_33(double gamma, void * parameters)
 	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
 	gsl_set_error_handler_off();
 	gsl_function F;
-	F.function = &K_33_integrand;
+	F.function = &chi_33_integrand;
 	F.params   = params;
 
 	int i            = 0;
@@ -168,7 +168,7 @@ double tau_integrator_33(double gamma, void * parameters)
 }
 
 
-double K_33(struct params * p)
+double chi_33(struct params * p)
 {
 	double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
 	

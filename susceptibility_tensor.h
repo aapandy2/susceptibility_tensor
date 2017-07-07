@@ -22,10 +22,6 @@ double I_1_analytic(double alpha, double delta);
 double I_2_analytic(double alpha, double delta);
 double MJ(struct params * params);
 
-double K_11_integrand(double tau_prime, void * parameters);
-double K_13_integrand(double tau_prime, void * parameters);
-double K_33_integrand(double tau_prime, void * parameters);
-
 double tau_integrator_11(double gamma, void * parameters);
 double tau_integrator_12(double gamma, void * parameters);
 double tau_integrator_13(double gamma, void * parameters);
@@ -33,15 +29,12 @@ double tau_integrator_32(double gamma, void * parameters);
 double tau_integrator_33(double gamma, void * parameters);
 double tau_integrator_22(double gamma, void * parameters);
 
-double start_search_13(struct params * params);
-double start_search_11(struct params * params);
-
-double K_11(struct params * p);
-double K_22(struct params * p);
-double K_33(struct params * p);
-double K_12(struct params * p);
-double K_21(struct params * p);
-double K_23(struct params * p);
-double K_32(struct params * p);
-double K_13(struct params * p);
-double K_31(struct params * p);
+double chi_11(struct params * p);
+double chi_22(struct params * p);
+double chi_33(struct params * p);
+double chi_12(struct params * p);
+double chi_21(struct params * p);
+double chi_23(struct params * p);
+double chi_32(struct params * p);
+double chi_13(struct params * p);
+double chi_31(struct params * p);
