@@ -51,32 +51,25 @@ double chi_33_integrand(double tau_prime, void * parameters)
 //	double tau_term   = -sin(tau_prime * params->gamma) 
 //			    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
 	double tau_term   = 1.;
-	double xi_term    = I_3_analytic(alpha, delta) - I_3_limit(alpha, delta);
+//	double xi_term    = I_3_analytic(alpha, delta) - I_3_limit(alpha, delta);
+	double xi_term;
+
+	/*subtracting off this term on the imaginary part speeds convergence
+	  by a factor of 2-3.  The term integrates to zero, so we get this
+	  speed boost basically for free.  The real part of this term is
+	  nonzero, however, and actually slows convergence by a factor of 10.*/
+	if(params->real == 1)
+	{
+		xi_term = I_3_analytic(alpha, delta);
+	}
+	else
+	{
+		xi_term = I_3_analytic(alpha, delta) - I_3_limit(alpha, delta);
+	}
+
 	double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
 	
 	return ans;
-}
-
-/*note: answer is totally imaginary*/
-double I_3_limit_integrated(struct params * p)
-{
-	double beta     = sqrt(1. - 1./pow(p->gamma, 2.));
-	double ans      = 1. / (p->gamma * beta * cos(p->theta)) * 2. * atanh(beta * cos(p->theta));
-	return ans;
-}
-
-/*note: answer is totally real*/
-double limit_term_integrated(struct params * params)
-{
-        double prefactor  = 1.; //should be 1j
-        double beta       = sqrt(1. - pow(params->gamma, -2.));
-
-        double gamma_term = beta*beta * params->gamma * MJ(params);
-        double tau_term   = 1.;
-        double xi_term    = I_3_limit_integrated(params);
-        double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
-
-        return -ans; //note: -1 factor comes from I_3_limit_integrated being imaginary, and the 1j prefactor here
 }
 
 double tau_integrator_33(double gamma, void * parameters)
@@ -92,9 +85,8 @@ double tau_integrator_33(double gamma, void * parameters)
         double ans_tot  = 0.;
 	double ans_step = 0.;
 	double error    = 0.;
-        double step     = 100./gamma;
+        double step     = M_PI/gamma;
         double start    = 0.;
-//        double end      = M_PI * params->omega / params->omega_c * 2. * params->resolution_factor;
 	size_t n        = 50;
 	size_t limit    = 5000;
 	double epsabs   = 0.;
@@ -154,17 +146,7 @@ double tau_integrator_33(double gamma, void * parameters)
 	gsl_integration_qawo_table_free(table);
 	gsl_integration_workspace_free(w);
 
-	double I_3_limit_integral;
-	if(params->real == 1)
-	{
-		I_3_limit_integral = limit_term_integrated(params);
-	}
-	else
-	{
-		I_3_limit_integral = 0.;
-	}
-
-	return ans_tot * sign_correction + I_3_limit_integral;
+	return ans_tot * sign_correction;
 }
 
 

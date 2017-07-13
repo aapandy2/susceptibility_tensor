@@ -29,6 +29,8 @@ double tau_integrator_32(double gamma, void * parameters);
 double tau_integrator_33(double gamma, void * parameters);
 double tau_integrator_22(double gamma, void * parameters);
 
+double chi_33_integrand(double tau_prime, void * parameters);
+
 double chi_11(struct params * p);
 double chi_22(struct params * p);
 double chi_33(struct params * p);

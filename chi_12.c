@@ -30,27 +30,62 @@ double MJ(struct params * params)
 	return ans;
 }
 
+//double chi_12_integrand(double tau_prime, void * parameters)
+//{
+//	struct params * params = (struct params*) parameters;
+//
+//	double prefactor  = 1.; //should be 1j
+//	double beta       = sqrt(1. - pow(params->gamma, -2.));
+//	double alpha      = beta * cos(params->theta) * tau_prime * params->gamma;
+//	double delta      = 2. * params->omega/(params->epsilon * params->omega_c) 
+//			   * sin(params->theta) * params->gamma * beta 
+//			   * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
+//
+//	double gamma_term = beta*beta * params->gamma * MJ(params);
+////	double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
+////	double tau_term   = -sin(tau_prime * params->gamma) 
+////			    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
+//	double tau_term   = sin((params->epsilon * params->omega_c / params->omega) * tau_prime);
+//	double xi_term    = -0.5 * I_1_analytic(alpha, delta);
+//	double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
+//	
+//	return ans;
+//}
+
 double chi_12_integrand(double tau_prime, void * parameters)
 {
-	struct params * params = (struct params*) parameters;
+        struct params * params = (struct params*) parameters;
 
-	double prefactor  = 1.; //should be 1j
-	double beta       = sqrt(1. - pow(params->gamma, -2.));
-	double alpha      = beta * cos(params->theta) * tau_prime * params->gamma;
-	double delta      = 2. * params->omega/(params->epsilon * params->omega_c) 
-			   * sin(params->theta) * params->gamma * beta 
-			   * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
+        double prefactor  = 1.; //should be 1j
+        double beta       = sqrt(1. - pow(params->gamma, -2.));
+        double alpha      = beta * cos(params->theta) * tau_prime * params->gamma;
+        double delta      = 2. * params->omega/(params->epsilon * params->omega_c)
+                           * sin(params->theta) * params->gamma * beta
+                           * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
 
-	double gamma_term = beta*beta * params->gamma * MJ(params);
-//	double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
-//	double tau_term   = -sin(tau_prime * params->gamma) 
-//			    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
-	double tau_term   = sin((params->epsilon * params->omega_c / params->omega) * tau_prime);
+        double gamma_term = beta*beta * params->gamma * MJ(params);
+//      double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
+//      double tau_term   = -sin(tau_prime * params->gamma) 
+//                          * sin((epsilon * params->omega_c / params->omega) * tau_prime);
+
+        double tau_term   = sin((params->epsilon * params->omega_c / params->omega) * tau_prime);
+
+//	if(params->real == 1)
+//	{
+//		tau_term *= -sin(params->gamma * tau_prime);
+//	}
+//	else
+//	{
+//		tau_term *= cos(params->gamma * tau_prime);
+//	} 
+
 	double xi_term    = -0.5 * I_1_analytic(alpha, delta);
-	double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
-	
-	return ans;
+        double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
+
+        return ans;
 }
+
+
 
 double tau_integrator_12(double gamma, void * parameters)
 {
@@ -64,7 +99,7 @@ double tau_integrator_12(double gamma, void * parameters)
         double ans_tot  = 0.;
 	double ans_step = 0.;
 	double error    = 0.;
-        double step     = 100./gamma; //TODO: change or play with this parameter
+        double step     = 5./gamma; //TODO: change or play with this parameter
         double start    = 0.;
 //        double end      = M_PI * params->omega / params->omega_c * 2. * params->resolution_factor;
 	size_t n        = 50;
@@ -94,7 +129,7 @@ double tau_integrator_12(double gamma, void * parameters)
 				gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
 	
 	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-	gsl_set_error_handler_off();
+//	gsl_set_error_handler_off();
 	gsl_function F;
 	F.function = &chi_12_integrand;
 	F.params   = params;
