@@ -88,8 +88,8 @@ double plotter(struct params p)
 	double i = 1.;
         while(i < 150)
         {
-                printf("\n%e    %e", i, tau_integrator_33(i, &p));
-                i = i + 2;
+                printf("\n%e    %e", i, tau_integrator_12(i, &p));
+                i = i + 1;
         }
         printf("\n");
 
@@ -104,15 +104,15 @@ int main(void)
 
 	/*set parameters*/
 	set_params(&p);
-	p.omega = 1000. * p.omega_c;
-	p.real  = 1;
+	p.omega = 1. * p.omega_c;
+	p.real  = 0;
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
 //	plotter(p);
 
 	/*print omega/omega_c	alpha_I(params)*/
-//	printf("\n%e    %e\n", p.omega/p.omega_c, rho_Q(&p));
-	printf("\n%e    %e\n", p.omega/p.omega_c, chi_33(&p));	
+	printf("\n%e    %e\n", p.omega/p.omega_c, rho_Q(&p));
+//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_33(&p));	
 
 	/*calculate and print elapsed time*/
 	diff = clock() - start;

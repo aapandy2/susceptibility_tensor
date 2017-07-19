@@ -61,10 +61,12 @@ double chi_33_integrand(double tau_prime, void * parameters)
 	if(params->real == 1)
 	{
 		xi_term = I_3_analytic(alpha, delta);
+		xi_term *= -sin(params->gamma * tau_prime);
 	}
 	else
 	{
 		xi_term = I_3_analytic(alpha, delta) - I_3_limit(alpha, delta);
+		xi_term *= cos(params->gamma * tau_prime);
 	}
 
 	double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
@@ -81,40 +83,19 @@ double tau_integrator_33(double gamma, void * parameters)
 		return 0.;
 	}
 
-
         double ans_tot  = 0.;
 	double ans_step = 0.;
 	double error    = 0.;
-        double step     = M_PI/gamma;
+        double step     = 2. * M_PI/gamma;
         double start    = 0.;
 	size_t n        = 50;
-	size_t limit    = 5000;
+	size_t limit    = 50;
 	double epsabs   = 0.;
 	double epsrel   = 1e-8;
-	enum gsl_integration_qawo_enum gsl_weight;
-	double sign_correction;
 	//need to update value of gamma
 	params-> gamma = gamma;
 
-	/*set up GSL QAWO integrator.  Do we need a new table w every call to tau_integrator_12?*/
-	/*we should also try QAWF; it fits the integrals we need, and may be faster than QAWO.  */
-
-	if(params->real == 1)
-	{
-		gsl_weight      = GSL_INTEG_SINE;
-		sign_correction = -1.;
-	}
-	else
-	{
-		gsl_weight      = GSL_INTEG_COSINE;
-		sign_correction = 1.;
-	}
-
-	gsl_integration_qawo_table * table = 
-				gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
-	
-	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-	gsl_set_error_handler_off();
+//	gsl_set_error_handler_off();
 	gsl_function F;
 	F.function = &chi_33_integrand;
 	F.params   = params;
@@ -125,10 +106,11 @@ double tau_integrator_33(double gamma, void * parameters)
 	int counts       = 0;
 
 	int i_max        = 1000;
-	double small_tol = 1e-15;
+	double small_tol = 1e-20;
 	while(i == 0 || counts < max_counter)
 	{
-		gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
+//		gsl_integration_qag(&F, i*step, (i+1)*step, epsabs, epsrel, limit, w, &ans_step, &error);
+	        gsl_integration_qng(&F, i*step, (i+1)*step, epsabs, epsrel, &ans_step, &error, &limit);
 		ans_tot += ans_step;
 		i       += 1;
 
@@ -143,10 +125,10 @@ double tau_integrator_33(double gamma, void * parameters)
 		}
 	}
 
-	gsl_integration_qawo_table_free(table);
-	gsl_integration_workspace_free(w);
+//	gsl_integration_qawo_table_free(table);
+//	gsl_integration_workspace_free(w);
 
-	return ans_tot * sign_correction;
+	return ans_tot;//* sign_correction;
 }
 
 

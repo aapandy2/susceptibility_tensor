@@ -47,7 +47,7 @@ double tau_integrator_11(double gamma, void * parameters)
         double ans_tot  = 0.;
 	double ans_step = 0.;
 	double error    = 0.;
-        double step     = 5./gamma; //TODO: change or play with this parameter
+        double step     = M_PI/gamma; //TODO: change or play with this parameter
         double start    = 0.;
 //        double end      = M_PI * params->omega / params->omega_c * 2. * params->resolution_factor;
 	size_t n        = 100;

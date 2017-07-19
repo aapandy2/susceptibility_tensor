@@ -57,7 +57,7 @@ double tau_integrator_32(double gamma, void * parameters)
         double ans_tot  = 0.;
 	double ans_step = 0.;
 	double error    = 0.;
-        double step     = 5. / gamma; //TODO: change or play with this parameter
+        double step     = M_PI / gamma; //TODO: change or play with this parameter
         double start    = 0.;
 //        double end      = M_PI * params->omega / params->omega_c * 2. * params->resolution_factor;
 	size_t n        = 50;
@@ -98,7 +98,7 @@ double tau_integrator_32(double gamma, void * parameters)
 	int counts       = 0;
 
 	int i_max        = 1000;
-	double small_tol = 1e-15;
+	double small_tol = 1e-20;
 	while(i == 0 || counts < max_counter)
 	{
 		gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
@@ -140,9 +140,10 @@ double chi_32(struct params * p)
 	double epsabs = 0.;
         double epsrel = 1e-8;
 
+	gsl_set_error_handler_off();
+
 	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
 
-	gsl_set_error_handler_off();
 //	gsl_integration_qagiu(&F, start, 0., 1e-8, limit, w, &ans, &error);
 //	gsl_integration_workspace_free(w);
 
