@@ -16,7 +16,7 @@ double chi_13_integrand(double tau_prime, void * parameters)
 			   * sin(params->theta) * params->gamma * beta 
 			   * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
 
-	double gamma_term = beta*beta * params->gamma * MJ(params);//* exp(-params->gamma/params->theta_e);
+	double gamma_term = beta*beta * params->gamma * Df(params);//* exp(-params->gamma/params->theta_e);
 				//explicit imag part
 //	double tau_term   = cos(tau_prime * params->gamma) * cos((params->epsilon * params->omega_c / params->omega) * tau_prime/2.);
 

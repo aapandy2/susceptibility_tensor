@@ -23,7 +23,7 @@ double chi_11_integrand(double tau_prime, void * parameters)
 			   * sin(params->theta) * params->gamma * beta 
 			   * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
 
-	double gamma_term = beta*beta * params->gamma * MJ(params);
+	double gamma_term = beta*beta * params->gamma * Df(params);
 //	double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //	double tau_term   = -sin(tau_prime * params->gamma) 
 //			    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
@@ -87,6 +87,11 @@ double tau_integrator_11(double gamma, void * parameters)
 	double tolerance = 1e-5;
 	int counts       = 0;
 
+	/*TODO: explain this*/
+	double ans_sign         = 0; 
+	int sign_change_counter = 0;
+	int max_sign_change_counter = 25.;
+
 	int i_max        = 1000;
 	double small_tol = 1e-20;
 	while(i == 0 || counts < max_counter)
@@ -104,9 +109,20 @@ double tau_integrator_11(double gamma, void * parameters)
 		{
 			counts = max_counter;
 		}
-	}
 
-//	printf("\n%e	%e\n", (i+1.)*step, 2. * M_PI * params->omega/params->omega_c);
+		//TODO: testing this
+		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
+		{
+			ans_sign = ans_tot/fabs(ans_tot);
+			sign_change_counter++;
+		}
+		if(sign_change_counter >= max_sign_change_counter)
+		{
+			return 0.;
+		}
+
+
+	}
 
 	gsl_integration_qawo_table_free(table);
 	gsl_integration_workspace_free(w);

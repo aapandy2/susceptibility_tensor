@@ -33,7 +33,7 @@ double chi_32_integrand(double tau_prime, void * parameters)
 			   * sin(params->theta) * params->gamma * beta 
 			   * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
 
-	double gamma_term = beta*beta * params->gamma * MJ(params);//* exp(-params->gamma/params->theta_e);
+	double gamma_term = beta*beta * params->gamma * Df(params);//* exp(-params->gamma/params->theta_e);
 //	double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //	double tau_term   = sin(tau_prime * params->gamma) 
 //			    * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / 2.);
@@ -129,18 +129,18 @@ double chi_32(struct params * p)
 	gsl_function F;
         F.function = &tau_integrator_32;
         F.params   = p;
-	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
+//	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
 
 //	double start  = start_search_32(p);
         double start  = 1.;
-	double end    = 150.;
+	double end    = 10.;
 	double ans    = 0.;
 	double error  = 0.;
 	size_t limit  = 50;
 	double epsabs = 0.;
         double epsrel = 1e-8;
 
-	gsl_set_error_handler_off();
+//	gsl_set_error_handler_off();
 
 	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
 

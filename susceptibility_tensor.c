@@ -14,7 +14,6 @@ int set_params(struct params *p)
 	//parameters
 	p->B       = 1.;          //background B strength
 	p->n_e     = 1.;          //electron number density cm^-3
-	p->theta_e = 10.;         //dimensionless electron temp
 	p->theta   = M_PI/3.;     //observer angle
 
 	//derived quantities
@@ -25,6 +24,15 @@ int set_params(struct params *p)
 	p->gamma             = 1.5; //will get reset later in integration
 	p->resolution_factor = 1;
 	p->real              = 1;
+
+	//distribution function
+	p->dist              = 0;
+
+	//distribution function parameters
+	p->theta_e   = 10.;         //dimensionless electron temp
+	p->pl_p      = 3;           //power-law index, p
+	p->gamma_min = 1.;          //power-law gamma_min
+	p->gamma_max = 1000.;       //power-law gamma_max
 
 	return 1;
 }
@@ -61,7 +69,7 @@ double rho_Q(struct params *p)
                           + chi_33(p) * pow(sin(p->theta), 2.)
                           + 2. * chi_13(p) * sin(p->theta) * cos(p->theta));
         double term22    = chi_22(p);
-        double ans       = prefactor * (term11 - term22);
+        double ans       = prefactor * (term22 - term11);
         return ans;
 }
 
@@ -85,11 +93,20 @@ double rho_V(struct params *p)
 
 double plotter(struct params p)
 {
-	double i = 1.;
-        while(i < 150)
+	FILE *fp;
+	fp = fopen("output.txt", "w");
+
+	double start = 1.;
+	double end   = 150.;
+	double i     = start;
+	double step  = 1.;
+
+
+        while(i < end)
         {
-                printf("\n%e    %e", i, tau_integrator_12(i, &p));
-                i = i + 1;
+                fprintf(fp, "\n%e    %e", i, tau_integrator_11(i, &p));
+		printf("\n%e", i);
+                i = i + step;
         }
         printf("\n");
 
@@ -104,14 +121,16 @@ int main(void)
 
 	/*set parameters*/
 	set_params(&p);
-	p.omega = 1. * p.omega_c;
-	p.real  = 0;
+	p.omega = 1000. * p.omega_c;
+	p.real  = 1;
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
-//	plotter(p);
+	plotter(p);
+//	printf("\n%e\n", tau_integrator_11(15., &p));
+
 
 	/*print omega/omega_c	alpha_I(params)*/
-	printf("\n%e    %e\n", p.omega/p.omega_c, rho_Q(&p));
+//	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
 //	printf("\n%e    %e\n", p.omega/p.omega_c, chi_33(&p));	
 
 	/*calculate and print elapsed time*/

@@ -9,18 +9,23 @@ struct params
 	double n_e;
 	double theta;
 	double theta_e;
+	double pl_p;
+	double gamma_min;
+	double gamma_max;
 	double omega_c;
 	double omega_p;
         double omega;
         double gamma;
         int resolution_factor;
 	int real;
+	int dist;
 };
 
 double I_1_of_2(double alpha, double delta);
 double I_1_analytic(double alpha, double delta);
 double I_2_analytic(double alpha, double delta);
 double MJ(struct params * params);
+double Df(struct params * params);
 
 double tau_integrator_11(double gamma, void * parameters);
 double tau_integrator_12(double gamma, void * parameters);

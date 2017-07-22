@@ -30,6 +30,32 @@ double MJ(struct params * params)
 	return ans;
 }
 
+double PL(struct params * params)
+{
+	double beta = sqrt(1. - 1./pow(params->gamma, 2.));
+
+	double ans = (params->pl_p - 1.) * (-1 + 2. * params->gamma * params->gamma 
+					 + params->pl_p * (params->gamma*params->gamma - 1.))
+		    / (4. * M_PI * (pow(params->gamma_min, -1. - params->pl_p) - pow(params->gamma_max, -1. - params->pl_p))
+			* beta * (params->gamma*params->gamma - 1.)) * pow(params->gamma, -3. - params->pl_p);
+	return ans;	
+}
+
+double Df(struct params * params)
+{
+	if(params->dist == 0)
+	{
+		return MJ(params);
+	}
+	else if(params->dist == 1)
+	{
+		return PL(params);
+	}
+
+	return 0.;
+
+}
+
 double chi_12_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -41,7 +67,7 @@ double chi_12_integrand(double tau_prime, void * parameters)
 			   * sin(params->theta) * params->gamma * beta 
 			   * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
 
-	double gamma_term = beta*beta * params->gamma * MJ(params);
+	double gamma_term = beta*beta * params->gamma * Df(params);
 //	double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //	double tau_term   = -sin(tau_prime * params->gamma) 
 //			    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
@@ -123,6 +149,7 @@ double tau_integrator_12(double gamma, void * parameters)
 		}
 	}
 
+
 	gsl_integration_qawo_table_free(table);
 	gsl_integration_workspace_free(w);
 
@@ -136,12 +163,12 @@ double chi_12(struct params * p)
 	gsl_function F;
         F.function = &tau_integrator_12;
         F.params   = p;
-	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
+//	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
 
 
 //	double start  = start_search_12(p);
         double start  = 1.;
-	double end    = 150.; //figure out better way to do this
+	double end    = 10.; //figure out better way to do this
 	double ans    = 0.;
 	double error  = 0.;
 	size_t limit  = 50;
@@ -149,7 +176,7 @@ double chi_12(struct params * p)
 	double epsrel = 1e-8;
 
 	
-	gsl_set_error_handler_off();
+//	gsl_set_error_handler_off();
 
 	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
 
