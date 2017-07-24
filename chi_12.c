@@ -130,6 +130,11 @@ double tau_integrator_12(double gamma, void * parameters)
 	double tolerance = 1e-5;
 	int counts       = 0;
 
+	/*TODO: explain this*/
+        double ans_sign         = 0;
+        int sign_change_counter = 0;
+        int max_sign_change_counter = 1000.; //THIS QUANTITY DEPENDS ON omega/omega_c
+
 	int i_max        = 1000;
 	double small_tol = 1e-20;
 	while(i == 0 || counts < max_counter)
@@ -143,10 +148,21 @@ double tau_integrator_12(double gamma, void * parameters)
 			counts += 1;
 		}
 
-		if(i >= i_max && fabs(ans_tot) < small_tol)
-		{
-			counts = max_counter;
-		}
+//		if(i >= i_max && fabs(ans_tot) < small_tol)
+//		{
+//			counts = max_counter;
+//		}
+
+		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
+                {
+                        ans_sign = ans_tot/fabs(ans_tot);
+                        sign_change_counter++;
+                }
+                if(sign_change_counter >= max_sign_change_counter)
+                {
+                        return 0.;
+                }
+
 	}
 
 
@@ -168,7 +184,7 @@ double chi_12(struct params * p)
 
 //	double start  = start_search_12(p);
         double start  = 1.;
-	double end    = 10.; //figure out better way to do this
+	double end    = 150.; //figure out better way to do this
 	double ans    = 0.;
 	double error  = 0.;
 	size_t limit  = 50;

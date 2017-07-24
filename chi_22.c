@@ -121,18 +121,23 @@ double tau_integrator_22_p1(double gamma, void * parameters)
                                 gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
 
         gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-//      gsl_set_error_handler_off();
+        gsl_set_error_handler_off();
         gsl_function F;
         F.function = &chi_22_integrand_p1;
         F.params   = params;
 
         int i            = 0;
-        int max_counter  = 500;
-        double tolerance = 1e-5;
+        int max_counter  = 2000;
+        double tolerance = 1e-6;
         int counts       = 0;
 
+	/*TODO: explain this*/
+        double ans_sign         = 0;
+        int sign_change_counter = 0;
+        int max_sign_change_counter = 10000.;
+
         int i_max        = 1000;
-        double small_tol = 1e-20;
+        double small_tol = 1e-17;
         while(i == 0 || counts < max_counter)
         {
                 gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
@@ -144,10 +149,21 @@ double tau_integrator_22_p1(double gamma, void * parameters)
                         counts += 1;
                 }
 
-                if(i >= i_max && fabs(ans_tot) < small_tol)
+//                if(i >= i_max && fabs(ans_tot) < small_tol)
+//                {
+//                        counts = max_counter;
+//                }
+
+		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
                 {
-                        counts = max_counter;
+                        ans_sign = ans_tot/fabs(ans_tot);
+                        sign_change_counter++;
                 }
+                if(sign_change_counter >= max_sign_change_counter)
+                {
+                        return 0.;
+                }
+
         }
 
         gsl_integration_qawo_table_free(table);
@@ -199,18 +215,23 @@ double tau_integrator_22_p2(double gamma, void * parameters)
                                 gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
 
         gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-//      gsl_set_error_handler_off();
+        gsl_set_error_handler_off();
         gsl_function F;
         F.function = &chi_22_integrand_p2;
         F.params   = params;
 
         int i            = 0;
-        int max_counter  = 500;
-        double tolerance = 1e-5;
+        int max_counter  = 2000;
+        double tolerance = 1e-6;
         int counts       = 0;
 
+	/*TODO: explain this*/
+        double ans_sign         = 0;
+        int sign_change_counter = 0;
+        int max_sign_change_counter = 10000.;
+
         int i_max        = 1000;
-        double small_tol = 1e-15;
+        double small_tol = 1e-17;
         while(i == 0 || counts < max_counter)
         {
                 gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
@@ -222,11 +243,22 @@ double tau_integrator_22_p2(double gamma, void * parameters)
                         counts += 1;
                 }
 
-                if(i >= i_max && fabs(ans_tot) < small_tol)
+//                if(i >= i_max && fabs(ans_tot) < small_tol)
+//                {
+//                        counts = max_counter;
+//                }
+        
+		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
                 {
-                        counts = max_counter;
+                        ans_sign = ans_tot/fabs(ans_tot);
+                        sign_change_counter++;
                 }
-        }
+                if(sign_change_counter >= max_sign_change_counter)
+                {
+                        return 0.;
+                }
+
+	}
 
         gsl_integration_qawo_table_free(table);
         gsl_integration_workspace_free(w);
@@ -277,18 +309,23 @@ double tau_integrator_22_real(double gamma, void * parameters)
 				gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
 	
 	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-//	gsl_set_error_handler_off();
+	gsl_set_error_handler_off();
 	gsl_function F;
 	F.function = &chi_22_integrand;
 	F.params   = params;
 
 	int i            = 0;
-	int max_counter  = 500;
-	double tolerance = 1e-5;
+	int max_counter  = 1000;
+	double tolerance = 1e-6;
 	int counts       = 0;
 
+	/*TODO: explain this*/
+        double ans_sign         = 0;
+        int sign_change_counter = 0;
+        int max_sign_change_counter = 10000.;
+
 	int i_max        = 1000;
-	double small_tol = 1e-15;
+	double small_tol = 1e-20;
 	while(i == 0 || counts < max_counter)
 	{
 		gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
@@ -304,6 +341,16 @@ double tau_integrator_22_real(double gamma, void * parameters)
 		{
 			counts = max_counter;
 		}
+
+//		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
+//                {
+//                        ans_sign = ans_tot/fabs(ans_tot);
+//                        sign_change_counter++;
+//                }
+//                if(sign_change_counter >= max_sign_change_counter)
+//                {
+//                        return 0.;
+//                }
 	}
 
 	gsl_integration_qawo_table_free(table);
@@ -338,7 +385,7 @@ double chi_22(struct params * p)
 	gsl_function F;
         F.function = &tau_integrator_22;
         F.params   = p;
-	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
+//	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
 
 
 	double start  = 1.;

@@ -83,17 +83,17 @@ double tau_integrator_11(double gamma, void * parameters)
 	F.params   = params;
 
 	int i            = 0;
-	int max_counter  = 500;
-	double tolerance = 1e-5;
+	int max_counter  = 1000;
+	double tolerance = 1e-6;
 	int counts       = 0;
 
 	/*TODO: explain this*/
 	double ans_sign         = 0; 
 	int sign_change_counter = 0;
-	int max_sign_change_counter = 25.;
+	int max_sign_change_counter = 1000.;
 
 	int i_max        = 1000;
-	double small_tol = 1e-20;
+	double small_tol = 1e-17;
 	while(i == 0 || counts < max_counter)
 	{
 		gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
@@ -105,10 +105,10 @@ double tau_integrator_11(double gamma, void * parameters)
 			counts += 1;
 		}
 
-		if(i >= i_max && fabs(ans_tot) < small_tol)
-		{
-			counts = max_counter;
-		}
+//		if(i >= i_max && fabs(ans_tot) < small_tol)
+//		{
+//			counts = max_counter;
+//		}
 
 		//TODO: testing this
 		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
@@ -137,7 +137,7 @@ double chi_11(struct params * p)
 	gsl_function F;
         F.function = &tau_integrator_11;
         F.params   = p;
-	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
+//	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
 
 
 	double start  = 1.;
