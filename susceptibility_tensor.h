@@ -16,9 +16,9 @@ struct params
 	double omega_p;
         double omega;
         double gamma;
-        int resolution_factor;
 	int real;
 	int dist;
+	double (*integrand)(double, void * parameters);
 };
 
 double I_1_of_2(double alpha, double delta);
@@ -27,14 +27,17 @@ double I_2_analytic(double alpha, double delta);
 double MJ(struct params * params);
 double Df(struct params * params);
 
-double tau_integrator_11(double gamma, void * parameters);
-double tau_integrator_12(double gamma, void * parameters);
-double tau_integrator_13(double gamma, void * parameters);
-double tau_integrator_32(double gamma, void * parameters);
-double tau_integrator_33(double gamma, void * parameters);
-double tau_integrator_22(double gamma, void * parameters);
-
+double chi_11_integrand(double tau_prime, void * parameters);
+double chi_12_integrand(double tau_prime, void * parameters);
+double chi_32_integrand(double tau_prime, void * parameters);
+double chi_13_integrand(double tau_prime, void * parameters);
 double chi_33_integrand(double tau_prime, void * parameters);
+double chi_22_integrand_p1(double tau_prime, void * parameters);
+double chi_22_integrand_p2(double tau_prime, void * parameters);
+double chi_22_integrand_real(double tau_prime, void * parameters);
+
+double tau_integrator(double gamma, void * parameters);
+double gamma_integrator(struct params * p);
 
 double chi_11(struct params * p);
 double chi_22(struct params * p);

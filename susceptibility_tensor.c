@@ -22,7 +22,6 @@ int set_params(struct params *p)
 
 	//integrator parameters
 	p->gamma             = 1.5; //will get reset later in integration
-	p->resolution_factor = 1;
 	p->real              = 1;
 
 	//distribution function
@@ -101,10 +100,11 @@ double plotter(struct params p)
 	double i     = start;
 	double step  = 1.;
 
+	p.integrand = chi_11_integrand;
 
         while(i < end)
         {
-                fprintf(fp, "\n%e    %e", i, tau_integrator_22(i, &p));
+                fprintf(fp, "\n%e    %e", i, tau_integrator(i, &p));
 		printf("\n%e", i);
                 i = i + step;
         }
@@ -126,12 +126,10 @@ int main(void)
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
 //	plotter(p);
-//	printf("\n%e\n", tau_integrator_11(15., &p));
-
 
 	/*print omega/omega_c	alpha_I(params)*/
 	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_I(&p));
-//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_33(&p));	
+//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_12(&p));	
 
 	/*calculate and print elapsed time*/
 	diff = clock() - start;
