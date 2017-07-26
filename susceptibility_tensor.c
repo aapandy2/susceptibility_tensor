@@ -28,7 +28,7 @@ int set_params(struct params *p)
 	p->dist              = 0;
 
 	//distribution function parameters
-	p->theta_e   = 10.;         //dimensionless electron temp
+	p->theta_e   = 10;         //dimensionless electron temp
 	p->pl_p      = 3;           //power-law index, p
 	p->gamma_min = 1.;          //power-law gamma_min
 	p->gamma_max = 1000.;       //power-law gamma_max
@@ -98,7 +98,7 @@ double plotter(struct params p)
 	double start = 1.;
 	double end   = 150.;
 	double i     = start;
-	double step  = 1.;
+	double step  = 2.;
 
 	p.integrand = chi_11_integrand;
 
@@ -121,14 +121,14 @@ int main(void)
 
 	/*set parameters*/
 	set_params(&p);
-	p.omega = 1000. * p.omega_c;
+	p.omega = 10000. * p.omega_c;
 	p.real  = 0;
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
-//	plotter(p);
+	plotter(p);
 
 	/*print omega/omega_c	alpha_I(params)*/
-	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_I(&p));
+//	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_I(&p));
 //	printf("\n%e    %e\n", p.omega/p.omega_c, chi_12(&p));	
 
 	/*calculate and print elapsed time*/
