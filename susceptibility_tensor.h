@@ -18,7 +18,8 @@ struct params
         double gamma;
 	int real;
 	int dist;
-	double (*integrand)(double, void * parameters);
+	double (*tau_integrand)(double, void * parameters);
+	double (*gamma_integrand)(double, void * parameters);
 };
 
 double I_1_of_2(double alpha, double delta);
@@ -32,9 +33,12 @@ double chi_12_integrand(double tau_prime, void * parameters);
 double chi_32_integrand(double tau_prime, void * parameters);
 double chi_13_integrand(double tau_prime, void * parameters);
 double chi_33_integrand(double tau_prime, void * parameters);
+double chi_22_integrand(double tau_prime, void * parameters);
 double chi_22_integrand_p1(double tau_prime, void * parameters);
 double chi_22_integrand_p2(double tau_prime, void * parameters);
 double chi_22_integrand_real(double tau_prime, void * parameters);
+
+double alpha_V_integrand(double tau_prime, void * parameters);
 
 double tau_integrator(double gamma, void * parameters);
 double gamma_integrator(struct params * p);

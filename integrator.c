@@ -28,7 +28,7 @@ double tau_integrator(double gamma, void * parameters)
 
 	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
 
-	if(params->integrand == &chi_33_integrand)
+	if(params->tau_integrand == &chi_33_integrand)
 	{
 		step = 2. * M_PI / gamma;
 		sign_correction = 1.;
@@ -59,25 +59,27 @@ double tau_integrator(double gamma, void * parameters)
 
 	gsl_set_error_handler_off();
 	gsl_function F;
-	F.function = params->integrand;
+	F.function = params->tau_integrand;
 	F.params   = params;
 
 	int i            = 0;
-	int max_counter  = 1000;
-	double tolerance = 1e-6;
+	int max_counter  = 2500;
+	double tolerance = 1e-7;
 	int counts       = 0;
 
 	/*TODO: explain this*/
 	double ans_sign         = 0; 
 	int sign_change_counter = 0;
-	int max_sign_change_counter = 1200.;
+	int max_sign_change_counter = 10000.;
 
-	int i_max        = 1000;
-	double small_tol = 1e-17;
+	int small_counter = 0;
+	double small_tol  = 1e-14;
+	int max_small_counter = 1000;
+
 	while(i == 0 || counts < max_counter)
 	{
 
-		if(params->integrand == &chi_33_integrand)
+		if(params->tau_integrand == &chi_33_integrand)
 		{
 			gsl_integration_qng(&F, i*step, (i+1)*step, epsabs, epsrel, &ans_step, &error, &limit);
 		}
@@ -94,15 +96,24 @@ double tau_integrator(double gamma, void * parameters)
 			counts += 1;
 		}
 
-		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
+		if(fabs(ans_tot) < small_tol)
 		{
-			ans_sign = ans_tot/fabs(ans_tot);
-			sign_change_counter++;
+			small_counter++;
 		}
-		if(sign_change_counter >= max_sign_change_counter)
+		if(small_counter >= max_small_counter)
 		{
 			return 0.;
 		}
+
+//		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
+//		{
+//			ans_sign = ans_tot/fabs(ans_tot);
+//			sign_change_counter++;
+//		}
+//		if(sign_change_counter >= max_sign_change_counter)
+//		{
+//			return 0.;
+//		}
 
 
 	}
@@ -114,61 +125,161 @@ double tau_integrator(double gamma, void * parameters)
 	return ans_tot;
 }
 
-double gamma_integrator(struct params *p)
+double trapezoidal(struct params *p, double start, double end, int samples)
 {
-        double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
 
-        gsl_function F;
-        F.function = &tau_integrator;
+        int i = 0;
+
+	double step      = (end - start)/samples;
+        double tolerance = 1e-6;
+        double ans_step  = 0.;
+        double ans_tot   = 0.;
+
+	double p1 = p->gamma_integrand(start+i*step, p);
+        double p2 = p->gamma_integrand(start+(i+1)*step, p);
+
+        while(i * step < end)
+        {
+
+                ans_step = step * (p1 + p2)/2.;
+
+		printf("\nSTART: %e     END: %e", start+i*step, start + (i+1)*step);
+
+                ans_tot += ans_step;
+                i++;
+
+                p1 = p2;
+                p2 = p->gamma_integrand(start+(i+1)*step, p);
+        }
+
+	return ans_tot;
+}
+
+double trapezoidal_adaptive(struct params *p, double start, double step)
+{
+
+        int i = 0;
+        double tolerance = 1e-6;
+        double ans_step  = 0.;
+        double ans_tot   = 0.;
+
+        double p1 = p->gamma_integrand(start+i*step, p);
+        double p2 = p->gamma_integrand(start+(i+1)*step, p);
+
+	while(ans_tot == 0 || fabs(ans_step/ans_tot) > tolerance)
+        {
+
+                ans_step = step * (p1 + p2)/2.;
+
+                printf("\nSTART: %e     END: %e", start+i*step, start + (i+1)*step);
+
+                ans_tot += ans_step;
+                i++;
+
+                p1 = p2;
+                p2 = p->gamma_integrand(start+(i+1)*step, p);
+        }
+
+        return ans_tot;
+}
+
+double end_approx(struct params *p)
+{
+	double end;
+
+        double MJ_max = 0.5 * (3. * p->theta_e + sqrt(4. + 9. * p->theta_e * p->theta_e));
+        double PL_max_real = sqrt((1. + p->pl_p)/p->pl_p);
+        double PL_max_imag = sqrt(p->omega/p->omega_c);
+
+        if(p->dist == 0)
+        {
+                end = 7. * MJ_max;
+        }
+        else if(p->dist == 1 && p->real == 1)
+        {
+                end = 10. * PL_max_real;
+        }
+        else if(p->dist == 1 && p->real == 0)
+        {
+                end = 10. * PL_max_imag;
+        }
+        else
+        {
+                printf("\ndistribution or real/imag is set incorrectly");
+                return 1.;
+        }
+
+	return end;
+}
+
+double gsl_integrator(struct params *p, double start, double end)
+{
+	gsl_function F;
+        F.function = p->gamma_integrand;
         F.params   = p;
-	
-//	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
 
+        gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
 
-        double start  = 1.;
-        double end    = 150.; //figure out better way to do this
         double ans    = 0.;
         double error  = 0.;
         size_t limit  = 5000;
         double epsabs = 0.;
-        double epsrel = 1e-3;
+        double epsrel = 1e-5;
+        int gsl_key   = 1;
 
+        printf("\n%e\n", end);
 
-//        gsl_set_error_handler_off();
-
-        gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
-
+//      gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
+        gsl_integration_qag(&F, start, end, epsabs, epsrel, limit, gsl_key, w, &ans, &error);
 //      gsl_integration_qagiu(&F, start, epsabs, epsrel, limit, w, &ans, &error);
-//      gsl_integration_workspace_free(w);
+	
+	gsl_integration_workspace_free(w);
 
-        return prefactor * ans;
+	return ans;
 }
 
+double gamma_integrator(struct params *p)
+{
+        double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
+
+        double start  = 1.;
+        double end = end_approx(p);
+
+	double ans_tot = trapezoidal(p, start, end, 100);
+//	double ans_tot = trapezoidal_adaptive(p, start, 5.);
+//	double ans_tot = gsl_integrator(p, start, end);
+
+        return prefactor * ans_tot;
+}
 
 double chi_11(struct params * p)
 {
-	p->integrand = &chi_11_integrand;
+	p->tau_integrand = &chi_11_integrand;
+        p->gamma_integrand = &tau_integrator;
 
 	return gamma_integrator(p);
 }
 
 double chi_12(struct params * p)
 {
-        p->integrand = &chi_12_integrand;
+        p->tau_integrand = &chi_12_integrand;
+	p->gamma_integrand = &tau_integrator;
 
         return gamma_integrator(p);
 }
 
 double chi_32(struct params * p)
 {
-        p->integrand = &chi_32_integrand;
+        p->tau_integrand = &chi_32_integrand;
+	p->gamma_integrand = &tau_integrator;
 
         return gamma_integrator(p);
 }
 
 double chi_13(struct params * p)
 {
-        p->integrand = &chi_13_integrand;
+        p->tau_integrand = &chi_13_integrand;
+        p->gamma_integrand = &tau_integrator;
 
         return gamma_integrator(p);
 }
@@ -176,29 +287,31 @@ double chi_13(struct params * p)
 double chi_22(struct params * p)
 {
 	double ans = 0.;
+        p->gamma_integrand = &tau_integrator;
 
 	if(p->real == 1)
 	{
-		p->integrand = &chi_22_integrand_p1;
+		p->tau_integrand = &chi_22_integrand_p1;
 		ans = gamma_integrator(p);
-		p->integrand = &chi_22_integrand_p2;
+		p->tau_integrand = &chi_22_integrand_p2;
 		ans += gamma_integrator(p);
 	}
 	else
 	{
-		p->integrand = &chi_22_integrand_real;
+		p->tau_integrand = &chi_22_integrand_real;
 		ans = gamma_integrator(p);
 	}
 
 	return ans;
 }
 
-//double chi_33(struct params * p)
-//{
-//        p->integrand = &chi_33_integrand;
-//
-//        return gamma_integrator(p);
-//}
+double chi_33(struct params * p)
+{
+        p->tau_integrand = &chi_33_integrand;
+        p->gamma_integrand = &tau_integrator;
+
+        return gamma_integrator(p);
+}
 
 double chi_21(struct params * p)
 {
@@ -213,476 +326,4 @@ double chi_23(struct params * p)
 double chi_31(struct params * p)
 {
         return chi_13(p);
-}
-//double chi_12(struct params * p)
-//{
-//	double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
-//	
-//	gsl_function F;
-//	p->integrand = &chi_12_integrand;
-//        F.function = &tau_integrator;
-//        F.params   = p;
-////	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
-//
-//
-////	double start  = start_search_12(p);
-//        double start  = 1.;
-//	double end    = 150.; //figure out better way to do this
-//	double ans    = 0.;
-//	double error  = 0.;
-//	size_t limit  = 50;
-//	double epsabs = 0.;
-//	double epsrel = 1e-8;
-//
-//	
-////	gsl_set_error_handler_off();
-//
-//	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
-//
-////	gsl_integration_qagiu(&F, start, 0., 1e-8, limit, w, &ans, &error);
-////	gsl_integration_workspace_free(w);
-//
-//	return prefactor * ans;
-//}
-//
-//double chi_21(struct params * p)
-//{
-//	return -chi_12(p);
-//}
-//
-//double chi_13(struct params * p)
-//{
-//	double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
-//	
-//	gsl_function F;
-//        F.function = &tau_integrator;
-//	p->integrand = &chi_13_integrand;
-//        F.params   = p;
-////	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
-//
-//        double start  = 1.;
-////	double start  = start_search_13(p);
-//	double end    = 150.;
-//	double ans    = 0.;
-//	double error  = 0.;
-//	size_t limit  = 50;
-//	double epsabs = 0.;
-//        double epsrel = 1e-8;
-//
-//
-//	gsl_set_error_handler_off();
-//	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
-//
-////	gsl_integration_qagiu(&F, start, 0., 1e-8, limit, w, &ans, &error);
-////	gsl_integration_workspace_free(w);
-//
-//	return prefactor * ans;
-////	return ans;
-//}
-//
-//double chi_31(struct params * p)
-//{
-//	return chi_13(p);
-//}
-
-//double tau_integrator_22_p1(double gamma, void * parameters)
-//{
-//        struct params * params = (struct params*) parameters;
-//
-//        if(gamma == 1.)
-//        {
-//                return 0.;
-//        }
-//
-//
-//        double ans_tot  = 0.;
-//        double ans_step = 0.;
-//        double error    = 0.;
-//        double step     = M_PI / gamma; //TODO: change or play with this parameter
-//        double start    = 0.;
-////        double end      = M_PI * params->omega / params->omega_c * 2. * params->resolution_factor;
-//        size_t n        = 50;
-//        size_t limit    = 5000;
-//        double epsabs   = 0.;
-//        double epsrel   = 1e-8;
-//        enum gsl_integration_qawo_enum gsl_weight;
-//        double sign_correction;
-//        //need to update value of gamma
-//        params-> gamma = gamma;
-//
-//        /*set up GSL QAWO integrator.  Do we need a new table w every call to tau_integrator_12?*/
-//        /*we should also try QAWF; it fits the integrals we need, and may be faster than QAWO.  */
-//
-//        if(params->real == 1)
-//        {
-//                gsl_weight      = GSL_INTEG_SINE;
-//                sign_correction = -1.;
-//        }
-//        else
-//        {
-//                gsl_weight      = GSL_INTEG_COSINE;
-//                sign_correction = 1.;
-//        }
-//
-//        gsl_integration_qawo_table * table =
-//                                gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
-//
-//        gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-//        gsl_set_error_handler_off();
-//        gsl_function F;
-//        F.function = &chi_22_integrand_p1;
-//        F.params   = params;
-//
-//        int i            = 0;
-//        int max_counter  = 2000;
-//        double tolerance = 1e-6;
-//        int counts       = 0;
-//
-//	/*TODO: explain this*/
-//        double ans_sign         = 0;
-//        int sign_change_counter = 0;
-//        int max_sign_change_counter = 10000.;
-//
-//        int i_max        = 1000;
-//        double small_tol = 1e-17;
-//        while(i == 0 || counts < max_counter)
-//        {
-//                gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
-//                ans_tot += ans_step;
-//                i       += 1;
-//
-//                if(fabs(ans_step / ans_tot) < tolerance)
-//                {
-//                        counts += 1;
-//                }
-//
-////                if(i >= i_max && fabs(ans_tot) < small_tol)
-////                {
-////                        counts = max_counter;
-////                }
-//
-//		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
-//                {
-//                        ans_sign = ans_tot/fabs(ans_tot);
-//                        sign_change_counter++;
-//                }
-//                if(sign_change_counter >= max_sign_change_counter)
-//                {
-//                        return 0.;
-//                }
-//
-//        }
-//
-//        gsl_integration_qawo_table_free(table);
-//        gsl_integration_workspace_free(w);
-//
-//        return ans_tot * sign_correction;
-//}
-//
-//double tau_integrator_22_p2(double gamma, void * parameters)
-//{
-//        struct params * params = (struct params*) parameters;
-//
-//        if(gamma == 1.)
-//        {
-//                return 0.;
-//        }
-//
-//
-//        double ans_tot  = 0.;
-//        double ans_step = 0.;
-//        double error    = 0.;
-//        double step     = M_PI / gamma; //TODO: change or play with this parameter
-//        double start    = 0.;
-////        double end      = M_PI * params->omega / params->omega_c * 2. * params->resolution_factor;
-//        size_t n        = 50;
-//        size_t limit    = 5000;
-//        double epsabs   = 0.;
-//        double epsrel   = 1e-8;
-//        enum gsl_integration_qawo_enum gsl_weight;
-//        double sign_correction;
-//        //need to update value of gamma
-//        params-> gamma = gamma;
-//
-//        /*set up GSL QAWO integrator.  Do we need a new table w every call to tau_integrator_12?*/
-//        /*we should also try QAWF; it fits the integrals we need, and may be faster than QAWO.  */
-//
-//        if(params->real == 1)
-//        {
-//                gsl_weight      = GSL_INTEG_SINE;
-//                sign_correction = -1.;
-//        }
-//        else
-//        {
-//                gsl_weight      = GSL_INTEG_COSINE;
-//                sign_correction = 1.;
-//        }
-//
-//        gsl_integration_qawo_table * table =
-//                                gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
-//
-//        gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-//        gsl_set_error_handler_off();
-//        gsl_function F;
-//        F.function = &chi_22_integrand_p2;
-//        F.params   = params;
-//
-//        int i            = 0;
-//        int max_counter  = 2000;
-//        double tolerance = 1e-6;
-//        int counts       = 0;
-//
-//	/*TODO: explain this*/
-//        double ans_sign         = 0;
-//        int sign_change_counter = 0;
-//        int max_sign_change_counter = 10000.;
-//
-//        int i_max        = 1000;
-//        double small_tol = 1e-17;
-//        while(i == 0 || counts < max_counter)
-//        {
-//                gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
-//                ans_tot += ans_step;
-//                i       += 1;
-//
-//                if(fabs(ans_step / ans_tot) < tolerance)
-//                {
-//                        counts += 1;
-//                }
-//
-////                if(i >= i_max && fabs(ans_tot) < small_tol)
-////                {
-////                        counts = max_counter;
-////                }
-//        
-//		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
-//                {
-//                        ans_sign = ans_tot/fabs(ans_tot);
-//                        sign_change_counter++;
-//                }
-//                if(sign_change_counter >= max_sign_change_counter)
-//                {
-//                        return 0.;
-//                }
-//
-//	}
-//
-//        gsl_integration_qawo_table_free(table);
-//        gsl_integration_workspace_free(w);
-//
-//        return ans_tot * sign_correction;
-//}
-//
-//double tau_integrator_22_real(double gamma, void * parameters)
-//{
-//	struct params * params = (struct params*) parameters;
-//
-//	if(gamma == 1.)
-//	{
-//		return 0.;
-//	}
-//
-//
-//        double ans_tot  = 0.;
-//	double ans_step = 0.;
-//	double error    = 0.;
-//        double step     = M_PI / gamma; //TODO: change or play with this parameter
-//        double start    = 0.;
-////        double end      = M_PI * params->omega / params->omega_c * 2. * params->resolution_factor;
-//	size_t n        = 50;
-//	size_t limit    = 5000;
-//	double epsabs   = 0.;
-//	double epsrel   = 1e-8;
-//	enum gsl_integration_qawo_enum gsl_weight;
-//	double sign_correction;
-//	//need to update value of gamma
-//	params-> gamma = gamma;
-//
-//	/*set up GSL QAWO integrator.  Do we need a new table w every call to tau_integrator_12?*/
-//	/*we should also try QAWF; it fits the integrals we need, and may be faster than QAWO.  */
-//
-//	if(params->real == 1)
-//	{
-//		gsl_weight      = GSL_INTEG_SINE;
-//		sign_correction = -1.;
-//	}
-//	else
-//	{
-//		gsl_weight      = GSL_INTEG_COSINE;
-//		sign_correction = 1.;
-//	}
-//
-//	gsl_integration_qawo_table * table = 
-//				gsl_integration_qawo_table_alloc(gamma, step, gsl_weight, n);
-//	
-//	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
-//	gsl_set_error_handler_off();
-//	gsl_function F;
-//	F.function = &chi_22_integrand_real;
-//	F.params   = params;
-//
-//	int i            = 0;
-//	int max_counter  = 1000;
-//	double tolerance = 1e-6;
-//	int counts       = 0;
-//
-//	/*TODO: explain this*/
-//        double ans_sign         = 0;
-//        int sign_change_counter = 0;
-//        int max_sign_change_counter = 10000.;
-//
-//	int i_max        = 1000;
-//	double small_tol = 1e-20;
-//	while(i == 0 || counts < max_counter)
-//	{
-//		gsl_integration_qawo(&F, i*step, epsabs, epsrel, limit, w, table, &ans_step, &error);
-//		ans_tot += ans_step;
-//		i       += 1;
-//
-//		if(fabs(ans_step / ans_tot) < tolerance)
-//		{
-//			counts += 1;
-//		}
-//
-//		if(i >= i_max && fabs(ans_tot) < small_tol)
-//		{
-//			counts = max_counter;
-//		}
-//
-////		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
-////                {
-////                        ans_sign = ans_tot/fabs(ans_tot);
-////                        sign_change_counter++;
-////                }
-////                if(sign_change_counter >= max_sign_change_counter)
-////                {
-////                        return 0.;
-////                }
-//	}
-//
-//	gsl_integration_qawo_table_free(table);
-//	gsl_integration_workspace_free(w);
-//
-//	return ans_tot * sign_correction;
-//}
-//
-//double tau_integrator_22(double gamma, void * parameters)
-//{
-//	struct params * params = (struct params*) parameters;
-//
-//	double ans = 0.;
-//
-//	if(params->real == 0)
-//	{
-//		params->integrand = &chi_22_integrand_p1;
-//		ans = tau_integrator(gamma, &params);
-//
-//		params->integrand = &chi_22_integrand_p2;
-//		ans += tau_integrator(gamma, &params);
-//	
-////		ans = tau_integrator_22_p1(gamma, parameters)
-////                     +tau_integrator_22_p2(gamma, parameters);
-//	}
-//	else
-//	{
-//		params->integrand = &chi_22_integrand_real;
-//		ans = tau_integrator(gamma, &params);
-////		ans = tau_integrator_22_real(gamma, parameters);
-//	}
-//	
-//	return ans;
-//}
-//
-//double chi_22(struct params * p)
-//{
-//	double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
-//	
-//	gsl_function F;
-//        F.function = &tau_integrator_22;
-//        F.params   = p;
-////	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
-//
-//
-//	double start  = 1.;
-////	double start  = start_search_22(p);
-//	double end    = 150.; //figure out better way to do this
-//	double ans    = 0.;
-//	double error  = 0.;
-//	size_t limit  = 50;
-//	double epsabs = 0.;
-//	double epsrel = 1e-8;
-//
-//	
-//	gsl_set_error_handler_off();
-//
-//	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
-//
-////	gsl_integration_qagiu(&F, start, 0., 1e-8, limit, w, &ans, &error);
-////	gsl_integration_workspace_free(w);
-//
-//	return prefactor * ans;
-//}
-
-//double chi_32(struct params * p)
-//{
-//	double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
-//	
-//	gsl_function F;
-//	p->integrand = &chi_32_integrand;
-//        F.function = &tau_integrator;
-//        F.params   = p;
-////	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
-//
-////	double start  = start_search_32(p);
-//        double start  = 1.;
-//	double end    = 150.;
-//	double ans    = 0.;
-//	double error  = 0.;
-//	size_t limit  = 50;
-//	double epsabs = 0.;
-//        double epsrel = 1e-8;
-//
-////	gsl_set_error_handler_off();
-//
-//	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
-//
-////	gsl_integration_qagiu(&F, start, 0., 1e-8, limit, w, &ans, &error);
-////	gsl_integration_workspace_free(w);
-//
-//	return prefactor * ans;
-//}
-//
-//double chi_23(struct params * p)
-//{
-//	return -chi_32(p);
-//}
-//
-double chi_33(struct params * p)
-{
-	double prefactor = 2. * M_PI * p->omega_p*p->omega_p / (p->omega * p->omega);
-	
-	gsl_function F;
-        F.function = &tau_integrator;
-	p->integrand = &chi_33_integrand;
-        F.params   = p;
-//	gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
-
-
-	double start  = 1.; //start_search_12(p);
-	double end    = 150.; //figure out better way to do this
-	double ans    = 0.;
-	double error  = 0.;
-	size_t limit  = 50;
-	double epsabs = 0.;
-	double epsrel = 1e-8;
-
-	
-	gsl_set_error_handler_off();
-
-	gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
-
-//	gsl_integration_qagiu(&F, start, 0., 1e-8, limit, w, &ans, &error);
-//	gsl_integration_workspace_free(w);
-
-	return prefactor * ans;
 }

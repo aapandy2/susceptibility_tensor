@@ -28,7 +28,7 @@ int set_params(struct params *p)
 	p->dist              = 0;
 
 	//distribution function parameters
-	p->theta_e   = 10;         //dimensionless electron temp
+	p->theta_e   = 10.;         //dimensionless electron temp
 	p->pl_p      = 3;           //power-law index, p
 	p->gamma_min = 1.;          //power-law gamma_min
 	p->gamma_max = 1000.;       //power-law gamma_max
@@ -74,11 +74,15 @@ double rho_Q(struct params *p)
 
 double alpha_V(struct params *p)
 {
-	p->real          = 1;
-	double prefactor = 4. * M_PI * p->epsilon0 * p->omega / p->c;
+	p->real            = 1;
+	double prefactor   = 4. * M_PI * p->epsilon0 * p->omega / p->c;
 	double term1     = (chi_12(p) * cos(p->theta) + chi_32(p) * sin(p->theta));
 	double ans       = prefactor * term1;
 	return ans;
+//	p->gamma_integrand = &alpha_V_integrand;
+//	double term1 = gamma_integrator(p);
+//	double ans   = prefactor * term1;
+//	return ans;
 }
 
 double rho_V(struct params *p)
@@ -98,13 +102,14 @@ double plotter(struct params p)
 	double start = 1.;
 	double end   = 150.;
 	double i     = start;
-	double step  = 2.;
+	double step  = 1.;
 
-	p.integrand = chi_11_integrand;
+	p.tau_integrand = &chi_12_integrand;
 
         while(i < end)
         {
-                fprintf(fp, "\n%e    %e", i, tau_integrator(i, &p));
+
+		fprintf(fp, "\n%e    %e", i, tau_integrator(i, &p));
 		printf("\n%e", i);
                 i = i + step;
         }
@@ -121,15 +126,15 @@ int main(void)
 
 	/*set parameters*/
 	set_params(&p);
-	p.omega = 10000. * p.omega_c;
-	p.real  = 0;
+	p.omega = 1000. * p.omega_c;
+	p.real  = 1;
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
-	plotter(p);
+//	plotter(p);
 
 	/*print omega/omega_c	alpha_I(params)*/
-//	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_I(&p));
-//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_12(&p));	
+	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
+//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_32(&p));	
 
 	/*calculate and print elapsed time*/
 	diff = clock() - start;

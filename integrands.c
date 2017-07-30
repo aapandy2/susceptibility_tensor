@@ -181,6 +181,23 @@ double chi_13_integrand(double tau_prime, void * parameters)
 	return ans;
 }
 
+double chi_22_integrand(double tau_prime, void * parameters)
+{
+	struct params * params = (struct params*) parameters;
+
+	if(params->real == 1)
+	{
+		return chi_22_integrand_real(tau_prime, parameters);
+	}
+	else
+	{
+		return chi_22_integrand_p1(tau_prime, parameters)
+		      +chi_22_integrand_p2(tau_prime, parameters);
+	}
+
+	return 0.;
+}
+
 /*note: for imaginary part of chi_22 splitting the integrand up is faster (40sec vs 170sec)
 	but for real part the combined integrand is faster (3sec vs 10sec)*/
 double chi_22_integrand_real(double tau_prime, void * parameters)
