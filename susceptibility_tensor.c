@@ -25,13 +25,16 @@ int set_params(struct params *p)
 	p->real              = 1;
 
 	//distribution function
-	p->dist              = 0;
+	p->dist              = 2;
 
 	//distribution function parameters
-	p->theta_e   = 10.;         //dimensionless electron temp
-	p->pl_p      = 3;           //power-law index, p
-	p->gamma_min = 1.;          //power-law gamma_min
-	p->gamma_max = 1000.;       //power-law gamma_max
+	p->theta_e     = 10.;         //dimensionless electron temp
+	p->pl_p        = 3;           //power-law index, p
+	p->gamma_min   = 1.;          //power-law gamma_min
+	p->gamma_max   = 1000.;       //power-law gamma_max
+	p->kappa       = 3.;         //kappa index
+	p->kappa_width = 10.;
+	p->gamma_cutoff = 1e10;
 
 	return 1;
 }
@@ -79,10 +82,6 @@ double alpha_V(struct params *p)
 	double term1     = (chi_12(p) * cos(p->theta) + chi_32(p) * sin(p->theta));
 	double ans       = prefactor * term1;
 	return ans;
-//	p->gamma_integrand = &alpha_V_integrand;
-//	double term1 = gamma_integrator(p);
-//	double ans   = prefactor * term1;
-//	return ans;
 }
 
 double rho_V(struct params *p)
@@ -100,11 +99,11 @@ double plotter(struct params p)
 	fp = fopen("output.txt", "w");
 
 	double start = 1.;
-	double end   = 150.;
+	double end   = 2000.;
 	double i     = start;
-	double step  = 1.;
+	double step  = 10.;
 
-	p.tau_integrand = &chi_12_integrand;
+	p.tau_integrand = &chi_32_integrand;
 
         while(i < end)
         {
@@ -126,7 +125,7 @@ int main(void)
 
 	/*set parameters*/
 	set_params(&p);
-	p.omega = 1000. * p.omega_c;
+	p.omega = 1. * p.omega_c;
 	p.real  = 1;
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/

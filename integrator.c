@@ -67,13 +67,9 @@ double tau_integrator(double gamma, void * parameters)
 	double tolerance = 1e-7;
 	int counts       = 0;
 
-	/*TODO: explain this*/
-	double ans_sign         = 0; 
-	int sign_change_counter = 0;
-	int max_sign_change_counter = 10000.;
-
+	/*TODO: explain this */
 	int small_counter = 0;
-	double small_tol  = 1e-14;
+	double small_tol  = 1e-14;  //TODO: want to set this adaptively
 	int max_small_counter = 1000;
 
 	while(i == 0 || counts < max_counter)
@@ -105,17 +101,6 @@ double tau_integrator(double gamma, void * parameters)
 			return 0.;
 		}
 
-//		if(i == 1 || ans_sign != ans_tot/fabs(ans_tot))
-//		{
-//			ans_sign = ans_tot/fabs(ans_tot);
-//			sign_change_counter++;
-//		}
-//		if(sign_change_counter >= max_sign_change_counter)
-//		{
-//			return 0.;
-//		}
-
-
 	}
 
 	gsl_integration_qawo_table_free(table);
@@ -138,7 +123,7 @@ double trapezoidal(struct params *p, double start, double end, int samples)
 	double p1 = p->gamma_integrand(start+i*step, p);
         double p2 = p->gamma_integrand(start+(i+1)*step, p);
 
-        while(i * step < end)
+        while(start + i * step <= end)
         {
 
                 ans_step = step * (p1 + p2)/2.;
@@ -203,7 +188,11 @@ double end_approx(struct params *p)
         {
                 end = 10. * PL_max_imag;
         }
-        else
+        else if(p->dist == 2)
+	{
+		end = 1000.; //TODO: implement real bound
+	}
+	else
         {
                 printf("\ndistribution or real/imag is set incorrectly");
                 return 1.;
@@ -245,8 +234,8 @@ double gamma_integrator(struct params *p)
         double start  = 1.;
         double end = end_approx(p);
 
-	double ans_tot = trapezoidal(p, start, end, 100);
-//	double ans_tot = trapezoidal_adaptive(p, start, 5.);
+//	double ans_tot = trapezoidal(p, start, end, 100);
+	double ans_tot = trapezoidal_adaptive(p, start, 5.);
 //	double ans_tot = gsl_integrator(p, start, end);
 
         return prefactor * ans_tot;

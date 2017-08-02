@@ -12,6 +12,9 @@ struct params
 	double pl_p;
 	double gamma_min;
 	double gamma_max;
+	double kappa;
+	double kappa_width;
+	double gamma_cutoff;
 	double omega_c;
 	double omega_p;
         double omega;

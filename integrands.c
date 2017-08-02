@@ -15,6 +15,11 @@ double MJ(struct params * params)
 
 double PL(struct params * params)
 {
+	if(params->gamma > params->gamma_max || params->gamma < params->gamma_min)
+	{
+		return 0.;
+	}
+
 	double beta = sqrt(1. - 1./pow(params->gamma, 2.));
 
 	double ans = (params->pl_p - 1.) * (-1 + 2. * params->gamma * params->gamma 
@@ -22,6 +27,77 @@ double PL(struct params * params)
 		    / (4. * M_PI * (pow(params->gamma_min, -1. - params->pl_p) - pow(params->gamma_max, -1. - params->pl_p))
 			* beta * (params->gamma*params->gamma - 1.)) * pow(params->gamma, -3. - params->pl_p);
 	return ans;	
+}
+
+double kappa_to_be_normalized(double gamma, void * parameters)
+{
+	struct params * params = (struct params*) parameters;
+
+        double beta = sqrt(1. - 1./pow(gamma, 2.));
+
+        double body = pow((1. + (gamma - 1.)/(params->kappa * params->kappa_width)), -1. - params->kappa);
+
+	double d3p = 4. * M_PI * gamma*gamma * beta;
+
+        double ans = body * d3p;
+
+        return ans;
+
+}
+
+double normalize_f(double (*distribution)(double, void *),
+                   struct params * params
+                  )
+{
+  
+	/*set GSL QAGIU integrator parameters */
+	double lower_bound = 1.;
+	double absolute_error = 0.;
+	double relative_error = 1e-8;
+	int limit  = 1000;
+	
+	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
+	double result, error;
+	gsl_function F;
+	
+	F.function = distribution;
+	
+	F.params = params;
+	
+	gsl_integration_qagiu(&F, lower_bound, absolute_error, 
+	                      relative_error, limit, w, &result, &error
+	                     );
+	
+	
+	gsl_integration_workspace_free(w);
+	
+	return result;
+}
+
+double kappa(struct params * params)
+{
+	static double norm                  = 0.;
+	static double previous_kappa        = 0.;
+	static double previous_kappa_width  = 0.;
+	static double previous_gamma_cutoff = 0.;
+	if(norm == 0. || previous_kappa_width != params->kappa_width
+	              || previous_kappa       != params->kappa)
+	{
+	  norm                  = 1./normalize_f(&kappa_to_be_normalized, params);
+	  previous_kappa        = params->kappa;
+	  previous_kappa_width  = params->kappa_width;
+	  previous_gamma_cutoff = params->gamma_cutoff;
+	}
+
+	double beta = sqrt(1. - 1./pow(params->gamma, 2.));
+
+	double body = -pow((1. + (params->gamma - 1.)/(params->kappa * params->kappa_width)), -2. - params->kappa)
+		     *(-1. - params->kappa) / (params->kappa_width * params->kappa);
+
+	double ans = norm * body;
+
+	return ans;
+
 }
 
 double Df(struct params * params)
@@ -33,6 +109,10 @@ double Df(struct params * params)
 	else if(params->dist == 1)
 	{
 		return PL(params);
+	}
+	else if(params->dist == 2)
+	{
+		return kappa(params);
 	}
 
 	return 0.;
