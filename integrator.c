@@ -172,9 +172,15 @@ double end_approx(struct params *p)
 {
 	double end;
 
-        double MJ_max = 0.5 * (3. * p->theta_e + sqrt(4. + 9. * p->theta_e * p->theta_e));
+        double MJ_max      = 0.5 * (3. * p->theta_e + sqrt(4. + 9. * p->theta_e * p->theta_e));
         double PL_max_real = sqrt((1. + p->pl_p)/p->pl_p);
         double PL_max_imag = sqrt(p->omega/p->omega_c);
+	double kappa_max   = (-3. + 3. * p->kappa_width * p->kappa 
+			      + sqrt(1. - 4. * p->kappa 
+			  	     - 18. * p->kappa_width * p->kappa 
+                                     + 4. * pow(p->kappa, 2.) 
+                                     + 9. * pow(p->kappa_width * p->kappa, 2.))) 
+			   / (2. * (p->kappa - 2.));
 
         if(p->dist == 0)
         {
@@ -190,7 +196,7 @@ double end_approx(struct params *p)
         }
         else if(p->dist == 2)
 	{
-		end = 1000.; //TODO: implement real bound
+		end = 7. * kappa_max;
 	}
 	else
         {
@@ -234,8 +240,8 @@ double gamma_integrator(struct params *p)
         double start  = 1.;
         double end = end_approx(p);
 
-//	double ans_tot = trapezoidal(p, start, end, 100);
-	double ans_tot = trapezoidal_adaptive(p, start, 5.);
+	double ans_tot = trapezoidal(p, start, end, 100);
+//	double ans_tot = trapezoidal_adaptive(p, start, 5.);
 //	double ans_tot = gsl_integrator(p, start, end);
 
         return prefactor * ans_tot;

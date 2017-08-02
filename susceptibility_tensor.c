@@ -28,11 +28,11 @@ int set_params(struct params *p)
 	p->dist              = 2;
 
 	//distribution function parameters
-	p->theta_e     = 10.;         //dimensionless electron temp
+	p->theta_e     = 1.;         //dimensionless electron temp
 	p->pl_p        = 3;           //power-law index, p
 	p->gamma_min   = 1.;          //power-law gamma_min
 	p->gamma_max   = 1000.;       //power-law gamma_max
-	p->kappa       = 3.;         //kappa index
+	p->kappa       = 3.5;         //kappa index
 	p->kappa_width = 10.;
 	p->gamma_cutoff = 1e10;
 
@@ -99,11 +99,11 @@ double plotter(struct params p)
 	fp = fopen("output.txt", "w");
 
 	double start = 1.;
-	double end   = 2000.;
+	double end   = 500.;
 	double i     = start;
-	double step  = 10.;
+	double step  = 25.;
 
-	p.tau_integrand = &chi_32_integrand;
+	p.tau_integrand = &chi_12_integrand;
 
         while(i < end)
         {
@@ -125,7 +125,7 @@ int main(void)
 
 	/*set parameters*/
 	set_params(&p);
-	p.omega = 1. * p.omega_c;
+	p.omega = 1000. * p.omega_c;
 	p.real  = 1;
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
