@@ -28,16 +28,15 @@ double tau_integrator(double gamma, void * parameters)
 
 	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
 
-	if(params->tau_integrand == &chi_33_integrand)
-	{
-		step = 2. * M_PI / gamma;
-		sign_correction = 1.;
-	}
-
-	else
-	{
-		step     = M_PI/gamma;
-	}
+//	if(params->tau_integrand == &chi_33_integrand)
+//	{
+//		step = 2. * M_PI / gamma;
+//		sign_correction = 1.;
+//	}
+//	else
+//	{
+//		step     = M_PI/gamma;
+//	}
 
 	if(params->real == 1)
         {
@@ -48,6 +47,16 @@ double tau_integrator(double gamma, void * parameters)
         {
 		gsl_weight      = GSL_INTEG_COSINE;
 		sign_correction = 1.;
+        }
+
+	if(params->tau_integrand == &chi_33_integrand)
+        {
+                step = 2. * M_PI / gamma;
+                sign_correction = 1.;
+        }
+        else
+        {
+                step     = M_PI/gamma;
         }
 
 	gsl_integration_qawo_table * table =
@@ -241,7 +250,7 @@ double gamma_integrator(struct params *p)
         double end = end_approx(p);
 
 	double ans_tot = trapezoidal(p, start, end, 100);
-//	double ans_tot = trapezoidal_adaptive(p, start, 5.);
+//	double ans_tot = trapezoidal_adaptive(p, start, 1.);
 //	double ans_tot = gsl_integrator(p, start, end);
 
         return prefactor * ans_tot;
@@ -284,7 +293,7 @@ double chi_22(struct params * p)
 	double ans = 0.;
         p->gamma_integrand = &tau_integrator;
 
-	if(p->real == 1)
+	if(p->real == 0)
 	{
 		p->tau_integrand = &chi_22_integrand_p1;
 		ans = gamma_integrator(p);
