@@ -122,10 +122,8 @@ double Df(struct params * params)
 double I_1_analytic(double alpha, double delta)
 {
 	double A     = sqrt(alpha*alpha + delta*delta);
-	double minus = sqrt(A - alpha);
-	double plus  = sqrt(A + alpha);
 
-	if(alpha == 0. || delta == 0. || minus == 0.)
+	if(alpha == 0. || delta == 0.)
 	{
 		return 0.;
 	}
@@ -146,10 +144,8 @@ double I_1_of_2(double alpha, double delta)
 double I_2_analytic(double alpha, double delta)
 {
 	double A     = sqrt(alpha*alpha + delta*delta);
-	double plus  = sqrt(A + alpha);
-	double minus = sqrt(A - alpha);
 
-	if(alpha == 0. || delta == 0. || minus == 0.)
+	if(alpha == 0. || delta == 0.)
         {
                 return 0.;
         }
@@ -227,7 +223,7 @@ double chi_12_integrand(double tau_prime, void * parameters)
 //	double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //	double tau_term   = -sin(tau_prime * params->gamma) 
 //			    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
-	double tau_term   = sin((params->epsilon * params->omega_c / params->omega) * tau_prime);
+	double tau_term   = sin( - (params->epsilon * params->omega_c / params->omega) * tau_prime);
 	double xi_term    = -0.5 * I_1_analytic(alpha, delta);
 	double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
 	
@@ -255,7 +251,7 @@ double chi_13_integrand(double tau_prime, void * parameters)
 
 	/*K_13 is K_32 except -S_2 -> C_2*/
 	double tau_term   = cos((params->epsilon * params->omega_c / params->omega) * tau_prime / 2.);
-	double xi_term    = -I_2_analytic(alpha, delta); //this term has a 1j, and I_2 has a 1j = -1 factor 
+	double xi_term    = I_2_analytic(alpha, delta); //NOTE: Graf thm error changes sign of this term TODO: write better explanation 
 	double ans        = prefactor * gamma_term * xi_term * tau_term * params->gamma*params->gamma * beta;
 
 	return ans;
@@ -312,13 +308,13 @@ double chi_22_integrand_p1(double tau_prime, void * parameters)
         double alpha      = beta * cos(params->theta) * tau_prime * params->gamma;
         double delta      = 2. * params->omega/(params->epsilon * params->omega_c)
                            * sin(params->theta) * params->gamma * beta 
-                           * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
+                           * sin(-(params->epsilon * params->omega_c / params->omega) * tau_prime / (2.));
 
         double gamma_term = beta*beta * params->gamma * MJ(params);
 //      double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //      double tau_term   = -sin(tau_prime * params->gamma) 
 //                          * sin((epsilon * params->omega_c / params->omega) * tau_prime);
-        double tauxi_term = 0.5 * (cos((params->epsilon * params->omega_c / params->omega) * tau_prime) * I_1_analytic(alpha, delta)
+        double tauxi_term = 0.5 * (cos(-(params->epsilon * params->omega_c / params->omega) * tau_prime) * I_1_analytic(alpha, delta)
                                    + 0.);
 
         double ans        = prefactor * gamma_term * tauxi_term * params->gamma*params->gamma * beta;

@@ -45,7 +45,7 @@ double alpha_I(struct params *p)
         double prefactor = 2. * M_PI * p->epsilon0 * p->omega / p->c;
         double term11    = (chi_11(p) * pow(cos(p->theta), 2.)  
 			  + chi_33(p) * pow(sin(p->theta), 2.)
-			  + 2. * chi_13(p) * sin(p->theta) * cos(p->theta));
+			  - 2. * chi_13(p) * sin(p->theta) * cos(p->theta));
 	double term22    = chi_22(p);
         double ans       = prefactor * (term11 + term22);
         return ans;
@@ -57,7 +57,7 @@ double alpha_Q(struct params *p)
         double prefactor = 2. * M_PI * p->epsilon0 * p->omega / p->c;
         double term11    = (chi_11(p) * pow(cos(p->theta), 2.)
                           + chi_33(p) * pow(sin(p->theta), 2.)
-                          + 2. * chi_13(p) * sin(p->theta) * cos(p->theta));
+                          - 2. * chi_13(p) * sin(p->theta) * cos(p->theta));
         double term22    = chi_22(p);
         double ans       = prefactor * (term11 - term22);
         return ans;
@@ -69,7 +69,7 @@ double rho_Q(struct params *p)
         double prefactor = 2. * M_PI * p->epsilon0 * p->omega / p->c;
         double term11    = (chi_11(p) * pow(cos(p->theta), 2.)
                           + chi_33(p) * pow(sin(p->theta), 2.)
-                          + 2. * chi_13(p) * sin(p->theta) * cos(p->theta));
+                          - 2. * chi_13(p) * sin(p->theta) * cos(p->theta));
         double term22    = chi_22(p);
         double ans       = prefactor * (term22 - term11);
         return ans;
@@ -79,7 +79,7 @@ double alpha_V(struct params *p)
 {
 	p->real            = 1;
 	double prefactor   = 4. * M_PI * p->epsilon0 * p->omega / p->c;
-	double term1     = (chi_12(p) * cos(p->theta) + chi_32(p) * sin(p->theta));
+	double term1     = (chi_12(p) * cos(p->theta) - chi_32(p) * sin(p->theta));
 	double ans       = prefactor * term1;
 	return ans;
 }
@@ -88,7 +88,7 @@ double rho_V(struct params *p)
 {
         p->real          = 0;
         double prefactor = 4. * M_PI * p->epsilon0 * p->omega / p->c;
-        double term1     = (chi_12(p) * cos(p->theta) + chi_32(p) * sin(p->theta));
+        double term1     = (chi_12(p) * cos(p->theta) - chi_32(p) * sin(p->theta));
         double ans       = prefactor * term1;
         return ans;
 }
@@ -132,8 +132,9 @@ int main(void)
 //	plotter(p);
 
 	/*print omega/omega_c	alpha_I(params)*/
-	printf("\n%e    %e\n", p.omega/p.omega_c, rho_Q(&p));
-//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_33(&p));	
+	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_I(&p));
+//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_13(&p));	
+//	printf("\n%e\n", chi_13_integrand(1.5, &p));
 
 	/*calculate and print elapsed time*/
 	diff = clock() - start;
