@@ -28,16 +28,6 @@ double tau_integrator(double gamma, void * parameters)
 
 	gsl_integration_workspace * w = gsl_integration_workspace_alloc (5000);
 
-//	if(params->tau_integrand == &chi_33_integrand)
-//	{
-//		step = 2. * M_PI / gamma;
-//		sign_correction = 1.;
-//	}
-//	else
-//	{
-//		step     = M_PI/gamma;
-//	}
-
 	if(params->real == 1)
         {
 		gsl_weight      = GSL_INTEG_SINE;
@@ -213,6 +203,8 @@ double end_approx(struct params *p)
                 return 1.;
         }
 
+	printf("\nEND: %e", end);
+
 	return end;
 }
 
@@ -234,8 +226,8 @@ double gsl_integrator(struct params *p, double start, double end)
         printf("\n%e\n", end);
 
 //      gsl_integration_qng(&F, start, end, epsabs, epsrel, &ans, &error, &limit);
-        gsl_integration_qag(&F, start, end, epsabs, epsrel, limit, gsl_key, w, &ans, &error);
-//      gsl_integration_qagiu(&F, start, epsabs, epsrel, limit, w, &ans, &error);
+	gsl_integration_qag(&F, start, end, epsabs, epsrel, limit, gsl_key, w, &ans, &error);
+//	gsl_integration_qagiu(&F, start, epsabs, epsrel, limit, w, &ans, &error);
 	
 	gsl_integration_workspace_free(w);
 
@@ -249,9 +241,11 @@ double gamma_integrator(struct params *p)
         double start  = 1.;
         double end = end_approx(p);
 
-	double ans_tot = trapezoidal(p, start, end, 100);
+	printf("\nEND: %e\n", end);
+
+//	double ans_tot = trapezoidal(p, start, end, 200);
 //	double ans_tot = trapezoidal_adaptive(p, start, 1.);
-//	double ans_tot = gsl_integrator(p, start, end);
+	double ans_tot = gsl_integrator(p, start, end);
 
         return prefactor * ans_tot;
 }

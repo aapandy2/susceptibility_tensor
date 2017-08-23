@@ -25,7 +25,7 @@ int set_params(struct params *p)
 	p->real              = 1;
 
 	//distribution function
-	p->dist              = 0;
+	p->dist              = 1;
 
 	//distribution function parameters
 	p->theta_e     = 10.;         //dimensionless electron temp
@@ -99,11 +99,11 @@ double plotter(struct params p)
 	fp = fopen("output.txt", "w");
 
 	double start = 1.;
-	double end   = 150.;
+	double end   = 25.;
 	double i     = start;
-	double step  = 5.;
+	double step  = 0.05;
 
-	p.tau_integrand = &chi_33_integrand;
+	p.tau_integrand = &chi_22_integrand;
 
         while(i < end)
         {
@@ -126,19 +126,17 @@ int main(void)
 	/*set parameters*/
 	set_params(&p);
 	p.omega = 1. * p.omega_c;
-	p.real  = 1;
+	p.real  = 0;
 
 	/*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
 //	plotter(p);
 
 	/*print omega/omega_c	alpha_I(params)*/
-	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_I(&p));
-//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_13(&p));	
-//	printf("\n%e\n", chi_13_integrand(1.5, &p));
+	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_Q(&p));
+//	printf("\n%e    %e\n", p.omega/p.omega_c, chi_12(&p));	
 
 	/*calculate and print elapsed time*/
 	diff = clock() - start;
 	int msec = diff * 1000 / CLOCKS_PER_SEC;
 	printf("Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
 }
-
