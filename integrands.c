@@ -5,6 +5,15 @@
 #include <gsl/gsl_errno.h>
 #include "susceptibility_tensor.h"
 
+/*MJ: returns the value of the Maxwell-Juettner (relativistic thermal)
+ *    distribution function for the parameters in the struct p.
+ *    TODO: I think a minus sign and other parts of Df are absorbed
+ *          into the integrands themselves, and should be moved here.
+ *
+ *@params: pointer to struct of parameters *params
+ *
+ *@returns: MJ(params->gamma, params->theta_e)
+ */
 double MJ(struct params * params)
 {
 	double ans = exp(-params->gamma/params->theta_e) 
@@ -13,6 +22,16 @@ double MJ(struct params * params)
 	return ans;
 }
 
+/*PL: returns the value of the power-law distribution function for 
+ *    the parameters in the struct p.
+ *    TODO: I think a minus sign and other parts of Df are absorbed
+ *          into the integrands themselves, and should be moved here.
+ *
+ *@params: pointer to struct of parameters *params
+ *
+ *@returns: PL(params->gamma, params->power_law_p, params->gamma_min,
+ *             params->gamma_max)
+ */
 double PL(struct params * params)
 {
 	if(params->gamma > params->gamma_max || params->gamma < params->gamma_min)
@@ -29,6 +48,17 @@ double PL(struct params * params)
 	return ans;	
 }
 
+/*kappa_to_be_normalized: returns the value of the unnormalized relativistic
+ *                        kappa distribution for the parameters in the struct p.
+ *                        This function is integrated over gamma to determine
+ *                        the normalization constant in normalize_f(), below.
+ *    TODO: I think a minus sign and other parts of Df are absorbed
+ *          into the integrands themselves, and should be moved here.
+ *
+ *@params: pointer to struct of parameters *params
+ *
+ *@returns: kappa_to_be_normalized(gamma, void * parameters)
+ */
 double kappa_to_be_normalized(double gamma, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -45,6 +75,12 @@ double kappa_to_be_normalized(double gamma, void * parameters)
 
 }
 
+/*normalize_f: normalizes the distribution function using GSL's 
+ *             QAGIU integrator.   
+ *
+ *@params: struct of parameters to pass to distribution function
+ *@returns: 1 over the normalization constant for the chosen distribution
+ */
 double normalize_f(double (*distribution)(double, void *),
                    struct params * params
                   )
@@ -74,6 +110,17 @@ double normalize_f(double (*distribution)(double, void *),
 	return result;
 }
 
+/*kappa: returns the value of the relativistic kappa distribution function for 
+ *    the parameters in the struct p, with the normalization handled
+ *    numerically by normalize_f().
+ *    TODO: I think a minus sign and other parts of Df are absorbed
+ *          into the integrands themselves, and should be moved here.
+ *
+ *@params: pointer to struct of parameters *params
+ *
+ *@returns: PL(params->gamma, params->power_law_p, params->gamma_min,
+ *             params->gamma_max)
+ */
 double kappa(struct params * params)
 {
 	static double norm                  = 0.;
@@ -100,6 +147,14 @@ double kappa(struct params * params)
 
 }
 
+/*Df: chooses the distribution function given by the parameter params->dist,
+ *    and returns that distribution function evaluated with the given
+ *    parameters in the struct params.
+ *
+ *@params: pointer to struct of parameters *params
+ *
+ *@returns: MJ(params), PL(params), or kappa(params), depending on params->dist
+ */
 double Df(struct params * params)
 {
 	if(params->dist == 0)
@@ -119,6 +174,15 @@ double Df(struct params * params)
 
 }
 
+/*I_1_analytic: analytic solution to the first cos_xi integral with Bessel
+ *              function order 0, which we have named I_1(0).  This term 
+ *              is used in chi_{11, 12, 21, 22}.
+ *
+ *@params: double alpha, double delta; these parameters are defined in terms of
+ *         relevant quantities in the chi_ij integrands.
+ *
+ *@returns: analytic solution to cos_xi integral I_1(0)
+ */
 double I_1_analytic(double alpha, double delta)
 {
 	double A     = sqrt(alpha*alpha + delta*delta);
@@ -134,6 +198,15 @@ double I_1_analytic(double alpha, double delta)
 
 }
 
+/*I_1_of_2: analytic solution to the first cos_xi integral with Bessel function
+ *          order 2, which we have named I_1(2).  This term is used in 
+ *          chi_{11, 22}.
+ *
+ *@params: double alpha, double delta; these parameters are defined in terms of
+ *         relevant quantities in the chi_ij integrands.
+ *
+ *@returns: analytic solution to cos_xi integral I_1(2)
+ */
 double I_1_of_2(double alpha, double delta)
 {
 	double A   = sqrt(alpha*alpha + delta*delta);
@@ -141,6 +214,15 @@ double I_1_of_2(double alpha, double delta)
 	return ans;
 }
 
+/*I_2_analytic: analytic solution to the second cos_xi integral with Bessel 
+ *          function order 1, which we have named I_2(1).  This term is used in 
+ *          chi_{13, 23, 31, 32}.
+ *
+ *@params: double alpha, double delta; these parameters are defined in terms of
+ *         relevant quantities in the chi_ij integrands.
+ *
+ *@returns: analytic solution to cos_xi integral I_2(1)
+ */
 double I_2_analytic(double alpha, double delta)
 {
 	double A     = sqrt(alpha*alpha + delta*delta);
@@ -156,6 +238,15 @@ double I_2_analytic(double alpha, double delta)
 	return ans;
 }
 
+/*I_3_analytic: analytic solution to the third cos_xi integral with Bessel 
+ *          function order 0, which we have named I_3(1).  This term is used in 
+ *          chi_33.
+ *
+ *@params: double alpha, double delta; these parameters are defined in terms of
+ *         relevant quantities in the chi_ij integrands.
+ *
+ *@returns: analytic solution to cos_xi integral I_3(0)
+ */
 double I_3_analytic(double alpha, double delta)
 {
 	if(alpha == 0. || delta == 0.)
@@ -173,6 +264,19 @@ double I_3_analytic(double alpha, double delta)
 	return ans;
 }
 
+/*I_3_limit: analytic solution to a limiting case of the I_3(0) cos_xi
+ *           integral, namely the one where A = alpha.  We subtract this
+ *           limiting form off of the existing tau integral for chi_33,
+ *           which makes the tau integral converge more rapidly.  We then
+ *           evaluate the limit term analytically and add it back on.
+ *           This function is the analytic integral of that limit term.
+ *
+ *@params: double alpha, double delta; these parameters are defined in terms of
+ *         relevant quantities in the chi_ij integrands.
+ *
+ *@returns: analytic solution to the I_3(0) limit case, used to improve the
+ *          rate of convergence of the chi_33 tau integral.
+ */
 double I_3_limit(double alpha, double delta)
 {
 	if(alpha == 0.)
@@ -186,6 +290,18 @@ double I_3_limit(double alpha, double delta)
         return ans;
 }
 
+/*chi_11_integrand: integrand for the component chi_11 of the susceptibility
+ *                  tensor.  The term e^(i*gamma*tau) determines the real
+ *                  and imaginary parts, and is left out of the below function
+ *                  because the integrator QAWO includes an implicit factor of
+ *                  sin(gamma*tau) or cos(gamma*tau), which is appropriately
+ *                  chosen in tau_integrator.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_11_integrand at tau_prime with parameters params
+ */
 double chi_11_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -208,6 +324,18 @@ double chi_11_integrand(double tau_prime, void * parameters)
 	return ans;
 }
 
+/*chi_12_integrand: integrand for the component chi_12 of the susceptibility
+ *                  tensor.  The term e^(i*gamma*tau) determines the real
+ *                  and imaginary parts, and is left out of the below function
+ *                  because the integrator QAWO includes an implicit factor of
+ *                  sin(gamma*tau) or cos(gamma*tau), which is appropriately
+ *                  chosen in tau_integrator.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_12_integrand at tau_prime with parameters params
+ */
 double chi_12_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -230,6 +358,18 @@ double chi_12_integrand(double tau_prime, void * parameters)
 	return ans;
 }
 
+/*chi_13_integrand: integrand for the component chi_13 of the susceptibility
+ *                  tensor.  The term e^(i*gamma*tau) determines the real
+ *                  and imaginary parts, and is left out of the below function
+ *                  because the integrator QAWO includes an implicit factor of
+ *                  sin(gamma*tau) or cos(gamma*tau), which is appropriately
+ *                  chosen in tau_integrator.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_13_integrand at tau_prime with parameters params
+ */
 double chi_13_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -257,6 +397,17 @@ double chi_13_integrand(double tau_prime, void * parameters)
 	return ans;
 }
 
+/*chi_22_integrand: integrand for the component chi_22 of the susceptibility
+ *                  tensor.  This term has two components, and it seems that
+ *                  integrating them together is faster for the real part,
+ *                  and integrating them separately is faster for the imaginary
+ *                  part.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_22_integrand at tau_prime with parameters params
+ */
 double chi_22_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -276,6 +427,16 @@ double chi_22_integrand(double tau_prime, void * parameters)
 
 /*note: for imaginary part of chi_22 splitting the integrand up is faster (40sec vs 170sec)
 	but for real part the combined integrand is faster (3sec vs 10sec)*/
+/*chi_22_integrand_real: integrand for the component chi_22 of the 
+ *                       susceptibility tensor.  Integrating the whole term is
+ *                       faster for the real part, so the real part's integrand
+ *                       is the whole term.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_22_integrand_real at tau_prime with parameters params
+ */
 double chi_22_integrand_real(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -299,6 +460,17 @@ double chi_22_integrand_real(double tau_prime, void * parameters)
 	return ans;
 }
 
+/*chi_22_integrand_p1: integrand for the first part of the component chi_22 of 
+ *                     the susceptibility tensor.  Integrating the two parts
+ *                     separately is faster for the imaginary part, so the
+ *                     below function corresponds to just the first term of the
+ *                     imaginary part integrand.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_22_integrand_p1 at tau_prime with parameters params
+ */
 double chi_22_integrand_p1(double tau_prime, void * parameters)
 {
         struct params * params = (struct params*) parameters;
@@ -322,6 +494,17 @@ double chi_22_integrand_p1(double tau_prime, void * parameters)
         return ans;
 }
 
+/*chi_22_integrand_p2: integrand for the second part of the component chi_22 of 
+ *                     the susceptibility tensor.  Integrating the two parts
+ *                     separately is faster for the imaginary part, so the
+ *                     below function corresponds to just the second term of the
+ *                     imaginary part integrand.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_22_integrand_p2 at tau_prime with parameters params
+ */
 double chi_22_integrand_p2(double tau_prime, void * parameters)
 {
         struct params * params = (struct params*) parameters;
@@ -345,6 +528,18 @@ double chi_22_integrand_p2(double tau_prime, void * parameters)
         return ans;
 }
 
+/*chi_32_integrand: integrand for the component chi_32 of the susceptibility
+ *                  tensor.  The term e^(i*gamma*tau) determines the real
+ *                  and imaginary parts, and is left out of the below function
+ *                  because the integrator QAWO includes an implicit factor of
+ *                  sin(gamma*tau) or cos(gamma*tau), which is appropriately
+ *                  chosen in tau_integrator.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_32_integrand at tau_prime with parameters params
+ */
 double chi_32_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -367,6 +562,17 @@ double chi_32_integrand(double tau_prime, void * parameters)
 	return ans;
 }
 
+/*chi_33_integrand: integrand for the component chi_33 of the susceptibility
+ *                  tensor.  The rate of convergence for the imaginary part's
+ *                  tau integral can be increased significantly by subtracting
+ *                  off a limit term, which is then integrated analytically and
+ *                  added onto the result of the numerical tau integral.
+ *
+ *@params: double tau_prime (the first integration is carried out over this
+ *         variable), void * parameters (a pointer to the struct of parameters)
+ *
+ *@returns: chi_13_integrand at tau_prime with parameters params
+ */
 double chi_33_integrand(double tau_prime, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
@@ -383,9 +589,8 @@ double chi_33_integrand(double tau_prime, void * parameters)
 //	double tau_term   = -sin(tau_prime * params->gamma) 
 //			    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
 	double tau_term   = 1.;
-//	double xi_term    = I_3_analytic(alpha, delta) - I_3_limit(alpha, delta);
+	
 	double xi_term;
-
 	/*subtracting off this term on the imaginary part speeds convergence
 	  by a factor of 2-3.  The term integrates to zero, so we get this
 	  speed boost basically for free.  The real part of this term is
