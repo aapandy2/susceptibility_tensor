@@ -4,11 +4,9 @@
 #include <gsl/gsl_sf_bessel.h>
 #include <gsl/gsl_errno.h>
 #include "susceptibility_tensor.h"
-
-/*NEW STUFF*/
 # include <omp.h>
 
-/*tau_integrator: integrator for the first integral (the tau integral) for the
+/*gamma_integrand: integrator for the first integral (the tau integral) for the
  *                components of the susceptibility tensor.  The chi_33 integral
  *                is faster when we use a fixed-order Gaussian quadrature
  *                method GSL QNG, rather than the GSL QAWO adaptive integrator
@@ -20,10 +18,9 @@
  *@returns: numerically evaluated tau integral at a given gamma of a given
  *          component of the susceptibility tensor
  */
-double tau_integrator(double gamma, void * parameters)
+double gamma_integrand(double gamma, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
-
 
 	if(gamma == 1.)
 	{
@@ -70,12 +67,15 @@ double tau_integrator(double gamma, void * parameters)
 
 
 	//need to update value of gamma
-	params-> gamma = gamma;
+//	params-> gamma = gamma;
+	struct params tau_params = *params;
+	tau_params.gamma = gamma;
+
 
 	gsl_set_error_handler_off();
 	gsl_function F;
 	F.function = params->tau_integrand;
-	F.params   = params;
+	F.params   = &tau_params;
 
 	int i            = 0;
 	int max_counter  = 2500;
@@ -125,119 +125,70 @@ double tau_integrator(double gamma, void * parameters)
 	return ans_tot;
 }
 
-/*trapezoidal: trapezoidal rule integrator for gamma integral, which can be
- *             faster than adaptive approaches because the integrand is
- *             smooth; one can also closely monitor the number of function
- *             calls to tau_integrator, which is important because these calls
- *             are rather expensive.
- *
- *@params: pointer to struct of parameters *p, start (starting point for gamma
- *         integral), end (ending point for gamma integral), samples (number of
- *         calls to tau_integrator allowed)
- *
- *@returns: gamma integral for a given component of chi_ij, evaluated using
- *          a trapezoidal rule integrator
- */
-//double trapezoidal(struct params *p, double start, double end, int samples)
-//{
-//
-//        int i = 0;
-//
-//	double step      = (end - start)/samples;
-//        double tolerance = 1e-6;
-//        double ans_step  = 0.;
-//        double ans_tot   = 0.;
-//
-//	double p1 = p->gamma_integrand(start+i*step, p);
-//        double p2 = p->gamma_integrand(start+(i+1)*step, p);
-//
-//	for(i = 1; start + i * step <= end; i++)
-//        {
-//
-//                ans_step = step * (p1 + p2)/2.;
-//
-//		printf("\nSTART: %e     END: %e", start+i*step, start + (i+1)*step);
-//
-//                ans_tot += ans_step;
-////		i++;
-//
-//                p1 = p2;
-//                p2 = p->gamma_integrand(start+(i+1)*step, p);
-//        }
-//
-//	return ans_tot;
-//}
-
-double trapezoidal(struct params *params, double start, double end, int samples)
+double midpoint_rule(struct params *params, double start, double end, int samples)
 {
-
-
   double a = start;
   double b = end;
   int i;
-  int n = 10; //arbitrary small number to quickly test code
+  int n = samples;
   double total;
   double x;
   total = 0.0;
 
   int tid;
 
-//actually using midpoint rule here
-
 # pragma omp parallel for private(i , x) reduction ( + : total )
 
   for(int i = 0; i < n; i++ )
   {
     x = (b - a)/n * i + a;
-    total = total + tau_integrator(x, params);
-    tid = omp_get_thread_num();
-    printf("thread = %d  %e  %e\n", tid, x, params->gamma);
-
+    total = total + gamma_integrand(x, params);
   }
 
   total = (b - a) / n * total;
 
-  printf("\n%e\n", total);
-
   return total;
 }
 
-/*trapezoidal_adaptive: trapezoidal rule integrator for gamma integral, similar
- *             to the above function, except it determines the ending point
- *             adaptively.
- *
- *@params: pointer to struct of parameters *p, start (starting point for gamma
- *         integral), step (step size between calls to tau_integrator)
- *
- *@returns: gamma integral for a given component of chi_ij, evaluated using
- *          an adaptive trapezoidal rule integrator
- */
-double trapezoidal_adaptive(struct params *p, double start, double step)
+double simpsons_rule(struct params *params, double start, double end, int samples)
 {
+  int n,i;
+  float s1=0,s2=0,sum,a,b,h;
+  double upper_limit = end;
+  double lower_limit = start;
+  int num_points  = samples; //TODO: enforce that this value is even
+  b = end;
+  a = start;
+  n = num_points;
+  double total = 0.;
+  
+  int tid;
+  
+  h=(upper_limit-lower_limit)/num_points;
+  
+  if(num_points%2 != 0)
+  {
+    printf("the rule is not appliciable");
+  }
+  
+  # pragma omp parallel for private(i, s1, s2) reduction ( + : total )
+  
+  for(i=1;i<=num_points-1;i++)
+    {
+       if(i%2==0)
+         {
+                total = total + 2. * gamma_integrand(lower_limit + i*h, params);
+          }
+          else
+          {
+                total = total + 4. * gamma_integrand(lower_limit + i*h, params);
+           }
+    }
 
-        int i = 0;
-        double tolerance = 1e-6;
-        double ans_step  = 0.;
-        double ans_tot   = 0.;
+  sum = h/3 * (gamma_integrand(lower_limit, params) + gamma_integrand(upper_limit, params) + total);
 
-        double p1 = p->gamma_integrand(start+i*step, p);
-        double p2 = p->gamma_integrand(start+(i+1)*step, p);
+  return sum;
 
-	while(ans_tot == 0 || fabs(ans_step/ans_tot) > tolerance)
-        {
-
-                ans_step = step * (p1 + p2)/2.;
-
-                printf("\nSTART: %e     END: %e", start+i*step, start + (i+1)*step);
-
-                ans_tot += ans_step;
-                i++;
-
-                p1 = p2;
-                p2 = p->gamma_integrand(start+(i+1)*step, p);
-        }
-
-        return ans_tot;
 }
 
 /*end_approx: approximate ending point for the gamma integral, beyond which
@@ -346,7 +297,8 @@ double gamma_integrator(struct params *p)
 	}
 	else
 	{
-		ans_tot = trapezoidal(p, start, end, 100);
+		ans_tot = simpsons_rule(p, start, end, 150);
+//		ans_tot = midpoint_rule(p, start, end, 150);
 	}
 
 //	double ans_tot = trapezoidal(p, start, end, 100);
@@ -365,7 +317,7 @@ double gamma_integrator(struct params *p)
 double chi_11(struct params * p)
 {
 	p->tau_integrand = &chi_11_integrand;
-        p->gamma_integrand = &tau_integrator;
+        p->gamma_integrand = &gamma_integrand;
 
 	return gamma_integrator(p);
 }
@@ -379,7 +331,7 @@ double chi_11(struct params * p)
 double chi_12(struct params * p)
 {
         p->tau_integrand = &chi_12_integrand;
-	p->gamma_integrand = &tau_integrator;
+	p->gamma_integrand = &gamma_integrand;
 
         return gamma_integrator(p);
 }
@@ -393,7 +345,7 @@ double chi_12(struct params * p)
 double chi_32(struct params * p)
 {
         p->tau_integrand = &chi_32_integrand;
-	p->gamma_integrand = &tau_integrator;
+	p->gamma_integrand = &gamma_integrand;
 
         return gamma_integrator(p);
 }
@@ -407,7 +359,7 @@ double chi_32(struct params * p)
 double chi_13(struct params * p)
 {
         p->tau_integrand = &chi_13_integrand;
-        p->gamma_integrand = &tau_integrator;
+        p->gamma_integrand = &gamma_integrand;
 
         return gamma_integrator(p);
 }
@@ -421,7 +373,7 @@ double chi_13(struct params * p)
 double chi_22(struct params * p)
 {
 	double ans = 0.;
-        p->gamma_integrand = &tau_integrator;
+        p->gamma_integrand = &gamma_integrand;
 
 	if(p->real == 0)
 	{
@@ -448,7 +400,7 @@ double chi_22(struct params * p)
 double chi_33(struct params * p)
 {
         p->tau_integrand = &chi_33_integrand;
-        p->gamma_integrand = &tau_integrator;
+        p->gamma_integrand = &gamma_integrand;
 
         return gamma_integrator(p);
 }

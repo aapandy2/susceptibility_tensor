@@ -43,7 +43,7 @@ double chi_22_integrand_real(double tau_prime, void * parameters);
 
 double alpha_V_integrand(double tau_prime, void * parameters);
 
-double tau_integrator(double gamma, void * parameters);
+double gamma_integrand(double gamma, void * parameters);
 double gamma_integrator(struct params * p);
 double end_approx(struct params * p);
 
