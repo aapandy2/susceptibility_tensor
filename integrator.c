@@ -5,6 +5,9 @@
 #include <gsl/gsl_errno.h>
 #include "susceptibility_tensor.h"
 
+/*NEW STUFF*/
+# include <omp.h>
+
 /*tau_integrator: integrator for the first integral (the tau integral) for the
  *                components of the susceptibility tensor.  The chi_33 integral
  *                is faster when we use a fixed-order Gaussian quadrature
@@ -20,6 +23,7 @@
 double tau_integrator(double gamma, void * parameters)
 {
 	struct params * params = (struct params*) parameters;
+
 
 	if(gamma == 1.)
 	{
@@ -134,34 +138,68 @@ double tau_integrator(double gamma, void * parameters)
  *@returns: gamma integral for a given component of chi_ij, evaluated using
  *          a trapezoidal rule integrator
  */
+//double trapezoidal(struct params *p, double start, double end, int samples)
+//{
+//
+//        int i = 0;
+//
+//	double step      = (end - start)/samples;
+//        double tolerance = 1e-6;
+//        double ans_step  = 0.;
+//        double ans_tot   = 0.;
+//
+//	double p1 = p->gamma_integrand(start+i*step, p);
+//        double p2 = p->gamma_integrand(start+(i+1)*step, p);
+//
+//	for(i = 1; start + i * step <= end; i++)
+//        {
+//
+//                ans_step = step * (p1 + p2)/2.;
+//
+//		printf("\nSTART: %e     END: %e", start+i*step, start + (i+1)*step);
+//
+//                ans_tot += ans_step;
+////		i++;
+//
+//                p1 = p2;
+//                p2 = p->gamma_integrand(start+(i+1)*step, p);
+//        }
+//
+//	return ans_tot;
+//}
+
 double trapezoidal(struct params *p, double start, double end, int samples)
 {
 
-        int i = 0;
 
-	double step      = (end - start)/samples;
-        double tolerance = 1e-6;
-        double ans_step  = 0.;
-        double ans_tot   = 0.;
+  double a = start;
+  double b = end;
+  int i;
+  int n = 10; //arbitrary small number to quickly test code
+  double total;
+  double x;
+  total = 0.0;
 
-	double p1 = p->gamma_integrand(start+i*step, p);
-        double p2 = p->gamma_integrand(start+(i+1)*step, p);
+  int tid;
 
-        while(start + i * step <= end)
-        {
+//actually using midpoint rule here
 
-                ans_step = step * (p1 + p2)/2.;
+# pragma omp parallel for private(i , x) reduction ( + : total )
 
-		printf("\nSTART: %e     END: %e", start+i*step, start + (i+1)*step);
+  for(int i = 0; i < n; i++ )
+  {
+    x = (b - a)/n * i + a;
+    total = total + tau_integrator(x, p);
+    tid = omp_get_thread_num();
+    printf("thread = %d  %e  %e\n", tid, x, p->gamma);
 
-                ans_tot += ans_step;
-                i++;
+  }
 
-                p1 = p2;
-                p2 = p->gamma_integrand(start+(i+1)*step, p);
-        }
+  total = (b - a) / n * total;
 
-	return ans_tot;
+  printf("\n%e\n", total);
+
+  return total;
 }
 
 /*trapezoidal_adaptive: trapezoidal rule integrator for gamma integral, similar

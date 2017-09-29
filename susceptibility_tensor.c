@@ -189,8 +189,8 @@ double plotter(struct params p)
 int main(void)
 {
 	/*start timer*/
-	clock_t start = clock(), diff;
-        struct params p;
+//	clock_t start = clock(), diff;
+	struct params p;
 
 	/*set parameters*/
 	set_params(&p);
@@ -201,10 +201,12 @@ int main(void)
 //	plotter(p);
 
 	/*print omega/omega_c	alpha_I(params)*/
-	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
+//	printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
+	printf("\n%e    %e\n", p.omega/p.omega_c, chi_12(&p));
+
 
 	/*calculate and print elapsed time*/
-	diff = clock() - start;
-	int msec = diff * 1000 / CLOCKS_PER_SEC;
-	printf("Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+//	diff = clock() - start;
+//	int msec = diff * 1000 / CLOCKS_PER_SEC;
+//	printf("Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
 }
