@@ -168,7 +168,7 @@ double tau_integrator(double gamma, void * parameters)
 //	return ans_tot;
 //}
 
-double trapezoidal(struct params *p, double start, double end, int samples)
+double trapezoidal(struct params *params, double start, double end, int samples)
 {
 
 
@@ -189,9 +189,9 @@ double trapezoidal(struct params *p, double start, double end, int samples)
   for(int i = 0; i < n; i++ )
   {
     x = (b - a)/n * i + a;
-    total = total + tau_integrator(x, p);
+    total = total + tau_integrator(x, params);
     tid = omp_get_thread_num();
-    printf("thread = %d  %e  %e\n", tid, x, p->gamma);
+    printf("thread = %d  %e  %e\n", tid, x, params->gamma);
 
   }
 
