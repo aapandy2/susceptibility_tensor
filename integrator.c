@@ -171,7 +171,7 @@ double simpsons_rule(struct params *params, double start, double end,
   
   if(num_points%2 != 0)
   {
-    printf("the rule is not appliciable");
+    printf("the rule is not applicable");
   }
   
   # pragma omp parallel for private(i, s1, s2) reduction ( + : total )
