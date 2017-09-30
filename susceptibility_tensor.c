@@ -34,7 +34,7 @@ int set_params(struct params *p)
   p->real              = 1;   //real part = 1, imag part = 0
   
   //distribution function
-  p->dist              = 0; //MJ=1, PL=2, kappa=3
+  p->dist              = 0; //MJ=0, PL=1, kappa=2
   
   //distribution function parameters
   p->theta_e     = 10.;         //dimensionless electron temp
