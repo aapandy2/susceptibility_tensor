@@ -191,7 +191,7 @@ int main(void)
   
   /*set parameters*/
   set_params(&p);
-  p.omega = 1. * p.omega_c;
+  p.omega = 10. * p.omega_c;
   p.real  = 1;
   
   /*print gamma	gamma_integrand(gamma) with the function plotter(params)*/

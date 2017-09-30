@@ -141,7 +141,7 @@ double midpoint_rule(struct params *params, double start,
 
 # pragma omp parallel for private(i , x) reduction ( + : total )
 
-  for(int i = 0; i < n; i++ )
+  for(i = 0; i < n; i++ )
   {
     x = (b - a)/n * i + a;
     total = total + gamma_integrand(x, params);
@@ -152,7 +152,52 @@ double midpoint_rule(struct params *params, double start,
   return total;
 }
 
-double simpsons_rule(struct params *params, double start, double end, 
+//TODO: can we define NUM_QUAD without a hash define?
+#define NUM_QUAD 21
+double gauss_legendre(struct params * params, double start, double end)
+{
+  double quadPts[NUM_QUAD] = \
+        {-9.93752171e-01,  -9.67226839e-01,  -9.20099334e-01,
+         -8.53363365e-01,  -7.68439963e-01,  -6.67138804e-01,
+         -5.51618836e-01,  -4.24342120e-01,  -2.88021317e-01,
+         -1.45561854e-01,   1.98918497e-16,   1.45561854e-01,
+          2.88021317e-01,   4.24342120e-01,   5.51618836e-01,
+          6.67138804e-01,   7.68439963e-01,   8.53363365e-01,
+          9.20099334e-01,   9.67226839e-01,   9.93752171e-01};
+
+  double weights[NUM_QUAD] = \
+        {0.01601723,  0.03695379,  0.05713443,  0.07610011,  0.09344442,
+         0.1087973 ,  0.12183142,  0.13226894,  0.13988739,  0.1445244 ,
+         0.14608113,  0.1445244 ,  0.13988739,  0.13226894,  0.12183142,
+         0.1087973 ,  0.09344442,  0.07610011,  0.05713443,  0.03695379,
+         0.01601723};
+
+  /*first we change integration variables to x = 1/(gamma^2 - 1), where the
+    upper integration bound b = 1 and the lower bound a = 0.  We then apply
+    the transformation: 
+    \int_a^b f(x) dx = (b-a)/2 \int_{-1}^1 f((b-a)x/2 + (a+b)/2) dx
+                     =     1/2 \int_{-1}^1 f(     x/2 +     1/2) dx */
+  double x      = 0.;
+  int i         = 0;
+  double weight = 0.;
+  double sum    = 0.;
+  int n = NUM_QUAD;
+
+  # pragma omp parallel for private(i , x, weight) reduction ( + : sum )
+
+  for(i = 0; i < n; i++)
+  {
+    x        = quadPts[i];
+    weight   = weights[i];
+
+    sum = sum + (end - start)/2. * gamma_integrand((end - start)/2. * x + (end + start)/2., params)
+                      * weight;
+  }
+
+  return sum;
+}
+
+double simpsons_rule(struct params * params, double start, double end, 
                      int samples)
 {
   int n,i;
@@ -304,8 +349,9 @@ double gamma_integrator(struct params *params)
   }
   else
   {
-    ans_tot = simpsons_rule(params, start, end, 150);
+//    ans_tot = simpsons_rule(params, start, end, 150);
 //		ans_tot = midpoint_rule(params, start, end, 150);
+    ans_tot = gauss_legendre(params, start, end);
   }
 
 //	double ans_tot = trapezoidal(params, start, end, 100);
