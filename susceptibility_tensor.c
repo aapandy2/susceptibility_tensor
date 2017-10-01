@@ -179,6 +179,37 @@ double plotter(struct params p)
   return 0.;
 }
 
+double spline_plotter(struct params p)
+{
+  FILE *fp;
+  fp = fopen("output.txt", "w");
+  
+  double start = 1.;
+  double end   = 1000.;
+  int i        = 0;
+  int j        = 0;
+  double step  = 100.;
+  double gamma = 1.;
+  
+  p.tau_integrand = &chi_12_integrand;
+  
+  for(i = 0; start + i*step <= end; i++)
+  {
+    gamma = start + i*step;
+    for(j = 0; start + j*step <= end; j++)
+    {
+      p.omega = (start + j*step)*p.omega_c;
+      fprintf(fp, "	%e", gamma_integrand(gamma, &p));
+//      printf("\ngam: %e, omega: %e  integrand: %e", gamma, p.omega/p.omega_c, gamma_integrand(gamma, &p));
+      printf("\nrow: %d, column: %d", i, j);
+    }
+      fprintf(fp, "\n");
+  }
+  printf("\n");
+  
+  return 0.;
+}
+
 /*main: sets parameters, runs some calculation, and prints the CPU time elapsed
  *
  *@params: none
@@ -191,12 +222,14 @@ int main(void)
   
   /*set parameters*/
   set_params(&p);
-  p.omega = 10. * p.omega_c;
+  p.omega = 1. * p.omega_c;
   p.real  = 1;
   
   /*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
-//  plotter(p);
+//  spline_plotter(p);
   
   /*print omega/omega_c	alpha_S(params)*/
-  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
+  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_Q(&p));
+//  p.tau_integrand = &chi_12_integrand;
+//  printf("\n%e    %e\n", p.omega/p.omega_c, gamma_integrand(101., &p));
 }

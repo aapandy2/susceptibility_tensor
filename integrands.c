@@ -318,7 +318,8 @@ double chi_11_integrand(double tau_prime, void * parameters)
   		      * sin((params->epsilon * params->omega_c / params->omega) 
                             * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //double tau_term   = -sin(tau_prime * params->gamma) 
 //	    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
@@ -326,8 +327,7 @@ double chi_11_integrand(double tau_prime, void * parameters)
                                  * tau_prime) 
                              * I_1_analytic(alpha, delta)
   			     - I_1_of_2(alpha, delta));
-  double ans        = prefactor * gamma_term * tauxi_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * tauxi_term;
   
   return ans;
 }
@@ -356,15 +356,15 @@ double chi_12_integrand(double tau_prime, void * parameters)
   		      * sin((params->epsilon * params->omega_c / params->omega) 
                             * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //double tau_term   = -sin(tau_prime * params->gamma) 
 //	    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
   double tau_term   = sin( - (params->epsilon * params->omega_c / params->omega) 
                           * tau_prime);
   double xi_term    = -0.5 * I_1_analytic(alpha, delta);
-  double ans        = prefactor * gamma_term * xi_term * tau_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * xi_term * tau_term;
   
   return ans;
 }
@@ -393,7 +393,8 @@ double chi_13_integrand(double tau_prime, void * parameters)
   		      * sin((params->epsilon * params->omega_c / params->omega) 
                             * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 				//explicit imag part
 //double tau_term   = cos(tau_prime * params->gamma) * cos((params->epsilon * params->omega_c / params->omega) * tau_prime/2.);
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
@@ -404,8 +405,7 @@ double chi_13_integrand(double tau_prime, void * parameters)
   double tau_term   = cos((params->epsilon * params->omega_c / params->omega) 
                           * tau_prime / 2.);
   double xi_term    = I_2_analytic(alpha, delta); 
-  double ans        = prefactor * gamma_term * xi_term * tau_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * xi_term * tau_term;
   
   return ans;
 }
@@ -460,7 +460,8 @@ double chi_22_integrand_real(double tau_prime, void * parameters)
   		      * sin((params->epsilon * params->omega_c / params->omega) 
                             * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //double tau_term   = -sin(tau_prime * params->gamma) 
 //	    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
@@ -469,8 +470,7 @@ double chi_22_integrand_real(double tau_prime, void * parameters)
                              * I_1_analytic(alpha, delta)
   			     + I_1_of_2(alpha, delta));
   
-  double ans        = prefactor * gamma_term * tauxi_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * tauxi_term;
   
   return ans;
 }
@@ -498,7 +498,8 @@ double chi_22_integrand_p1(double tau_prime, void * parameters)
                      * sin((params->epsilon * params->omega_c / params->omega) 
                            * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //double tau_term   = -sin(tau_prime * params->gamma) 
 //              * sin((epsilon * params->omega_c / params->omega) * tau_prime);
@@ -507,8 +508,7 @@ double chi_22_integrand_p1(double tau_prime, void * parameters)
                              * I_1_analytic(alpha, delta)
                              + 0.);
   
-  double ans        = prefactor * gamma_term * tauxi_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * tauxi_term;
   
   return ans;
 }
@@ -536,15 +536,15 @@ double chi_22_integrand_p2(double tau_prime, void * parameters)
                      * sin((params->epsilon * params->omega_c / params->omega) 
                            * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //double tau_term   = -sin(tau_prime * params->gamma) 
 //               * sin((epsilon * params->omega_c / params->omega) * tau_prime);
   double tauxi_term = 0.5 * (0.
                              + I_1_of_2(alpha, delta));
   
-  double ans        = prefactor * gamma_term * tauxi_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * tauxi_term;
   
   return ans;
 }
@@ -573,15 +573,15 @@ double chi_32_integrand(double tau_prime, void * parameters)
   		   * sin((params->epsilon * params->omega_c / params->omega) 
                          * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //double tau_term   = sin(tau_prime * params->gamma) 
 //  * sin((params->epsilon * params->omega_c / params->omega) * tau_prime / 2.);
   double tau_term   = sin((params->epsilon * params->omega_c / params->omega) 
                           * tau_prime / 2.);
   double xi_term    = I_2_analytic(alpha, delta);
-  double ans        = prefactor * gamma_term * xi_term * tau_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * xi_term * tau_term;
   
   return ans;
 }
@@ -609,7 +609,8 @@ double chi_33_integrand(double tau_prime, void * parameters)
   		   * sin((params->epsilon * params->omega_c / params->omega) 
                          * tau_prime / (2.));
   
-  double gamma_term = beta*beta * params->gamma * Df(params);
+//  double gamma_term = beta*beta * params->gamma * Df(params) * params->gamma*params->gamma * beta;
+  double gamma_term = 1.;
 //double tau_term   = exp(1j * tau_prime * gamma) * sin((epsilon * omega_c / omega) * tau_prime);
 //double tau_term   = -sin(tau_prime * params->gamma) 
 //	    * sin((epsilon * params->omega_c / params->omega) * tau_prime);
@@ -631,8 +632,7 @@ double chi_33_integrand(double tau_prime, void * parameters)
   	xi_term *= cos(params->gamma * tau_prime);
   }
   
-  double ans        = prefactor * gamma_term * xi_term * tau_term 
-                      * params->gamma*params->gamma * beta;
+  double ans        = prefactor * gamma_term * xi_term * tau_term;
   
   return ans;
 }
