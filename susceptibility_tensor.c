@@ -188,24 +188,41 @@ double spline_plotter(struct params p)
   double end   = 1000.;
   int i        = 0;
   int j        = 0;
-  double step  = 100.;
+  double step  = 250.;
   double gamma = 1.;
-  
+
+  int j_max    = (int) ( (end - start) / step);
+
   p.tau_integrand = &chi_12_integrand;
   
+  int array_width = (int)((end - start + 1) / step);
+
+  double gamma_omratio_array[array_width][array_width];
+
+  printf("\narray is %d^2 in size\n", array_width);
+
   for(i = 0; start + i*step <= end; i++)
   {
-    gamma = start + i*step;
-    for(j = 0; start + j*step <= end; j++)
+    p.omega = (start + i*step)*p.omega_c;
+
+    #pragma omp parallel for
+    for(j = 0; j <= j_max; j++)
     {
-      p.omega = (start + j*step)*p.omega_c;
-      fprintf(fp, "	%e", gamma_integrand(gamma, &p));
-//      printf("\ngam: %e, omega: %e  integrand: %e", gamma, p.omega/p.omega_c, gamma_integrand(gamma, &p));
-      printf("\nrow: %d, column: %d", i, j);
+      gamma = start + j*step;
+      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
     }
-      fprintf(fp, "\n");
+      printf("\nrow: %d", i);
   }
   printf("\n");
+
+  for(i = 0; start + i*step <= end; i++)
+  {
+    for(j = 0; start + j*step <= end; j++)
+    {
+      fprintf(fp, "	%e", gamma_omratio_array[i][j]);
+    }
+    fprintf(fp, "\n");
+  }
   
   return 0.;
 }
@@ -226,10 +243,10 @@ int main(void)
   p.real  = 1;
   
   /*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
-//  spline_plotter(p);
+  spline_plotter(p);
   
   /*print omega/omega_c	alpha_S(params)*/
-  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_Q(&p));
+//  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_Q(&p));
 //  p.tau_integrand = &chi_12_integrand;
 //  printf("\n%e    %e\n", p.omega/p.omega_c, gamma_integrand(101., &p));
 }
