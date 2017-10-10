@@ -2,6 +2,7 @@
 #include <math.h>
 #include "susceptibility_tensor.h"
 #include <time.h>
+#include <string.h>
 
 /*set_params: sets values for the constants (permittivity of free space,
  *            electron charge, electron mass, etc.) as well as the 
@@ -181,43 +182,116 @@ double plotter(struct params p)
 
 double spline_plotter(struct params p)
 {
+  char ch, buffer[1000];
+  int i = 0, arr[280], j = 0;
+  
+  FILE *fs; 
+ 
+  // Openning the file with file handler as fs
+  fs = fopen("step_array.txt", "r");
+  
+  // Read the file unless the file encounters an EOF
+  while(1)
+  {
+   // Reads the character where the seeker is currently
+   ch = fgetc(fs);
+   
+   // If EOF is encountered then break out of the while loop
+   if(ch == EOF){
+   	break;
+   }
+   
+   // If the delimiter is encounterd(which can be
+   // anything according to your wish) then skip the character
+   // and store the last read array of characters in
+   // an integer array
+   else if(ch == ' '){
+   
+   	// Converting the content of the buffer into
+   	// an array position
+   	arr[j] = atoi(buffer);
+   
+   	// Increamenting the array position
+   	j++;
+   
+   	// Clearing the buffer, this function takes two
+   	// arguments, one is a character pointer and 
+   	// the other one is the size of the character array
+   	bzero(buffer, 32);
+   
+   	// clearing the counter which counts the number
+   	// of character in each number used for reading
+   	// into the buffer.
+   	i = 0;
+   
+   	// then continue
+   	continue;
+   }
+   else{
+   
+   	// reads the current character in the buffer
+   	buffer[i] = ch;
+   
+   	// increamenting the counter so that the next
+   	// character is read in the next position in 
+   	// the array of buffer
+   	i++;
+   }
+    }
+  
+  // printing out all the elements that are stored in the
+  // array of integers
+//  for(i = 0; i < j; i++){
+//  	printf("Number [%d]: %d\n", i, arr[i]);
+//  }
+  
   FILE *fp;
   fp = fopen("output.txt", "w");
-  
+
+ 
   double start = 1.;
-  double end   = 1000.;
-  int i        = 0;
-  int j        = 0;
-  double step  = 250.;
+//  double end   = 1000.;
+  i        = 0;
+  j        = 0;
+//  double step  = 250.;
   double gamma = 1.;
 
-  int j_max    = (int) ( (end - start) / step);
+  int max_index = 280;
+
+//  int j_max    = (int) ( (end - start) / step);
 
   p.tau_integrand = &chi_12_integrand;
   
-  int array_width = (int)((end - start + 1) / step);
+  int array_width = max_index;
+
+//  int array_width = (int)((end - start + 1) / step);
 
   double gamma_omratio_array[array_width][array_width];
 
   printf("\narray is %d^2 in size\n", array_width);
 
-  for(i = 0; start + i*step <= end; i++)
+  for(i = 0; i < max_index; i++)
   {
-    p.omega = (start + i*step)*p.omega_c;
+//    p.omega = (start + i*step)*p.omega_c;
+    p.omega = arr[i] * p.omega_c;
 
-    #pragma omp parallel for
-    for(j = 0; j <= j_max; j++)
+//    printf("\n%d %e", i, p.omega/p.omega_c);
+
+//    #pragma omp parallel for
+    for(j = 0; j < max_index; j++)
     {
-      gamma = start + j*step;
-      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
+//      gamma = start + j*step;
+      gamma = arr[j];
+//      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
+      gamma_omratio_array[i][j] = 0.;
     }
       printf("\nrow: %d", i);
   }
   printf("\n");
 
-  for(i = 0; start + i*step <= end; i++)
+  for(i = 0; i < max_index; i++)
   {
-    for(j = 0; start + j*step <= end; j++)
+    for(j = 0; j < max_index; j++)
     {
       fprintf(fp, "	%e", gamma_omratio_array[i][j]);
     }
