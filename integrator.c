@@ -84,7 +84,7 @@ double gamma_integrand(double gamma, void * parameters)
   
   /*TODO: explain this */
   int small_counter = 0;
-  double small_tol  = 1e-14;  //TODO: want to set this adaptively
+  double small_tol  = 1e-7;  //TODO: want to set this adaptively
   int max_small_counter = 1000;
   
   while(i == 0 || counts < max_counter)

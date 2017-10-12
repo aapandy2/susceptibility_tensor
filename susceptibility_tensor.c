@@ -239,32 +239,20 @@ double spline_plotter(struct params p)
    }
     }
   
-  // printing out all the elements that are stored in the
-  // array of integers
-//  for(i = 0; i < j; i++){
-//  	printf("Number [%d]: %d\n", i, arr[i]);
-//  }
-  
   FILE *fp;
-  fp = fopen("output.txt", "w");
+  fp = fopen("chi_12_real_mod_step.txt", "w");
 
  
   double start = 1.;
-//  double end   = 1000.;
   i        = 0;
   j        = 0;
-//  double step  = 250.;
   double gamma = 1.;
 
   int max_index = 280;
 
-//  int j_max    = (int) ( (end - start) / step);
-
   p.tau_integrand = &chi_12_integrand;
   
   int array_width = max_index;
-
-//  int array_width = (int)((end - start + 1) / step);
 
   double gamma_omratio_array[array_width][array_width];
 
@@ -272,18 +260,13 @@ double spline_plotter(struct params p)
 
   for(i = 0; i < max_index; i++)
   {
-//    p.omega = (start + i*step)*p.omega_c;
     p.omega = arr[i] * p.omega_c;
 
-//    printf("\n%d %e", i, p.omega/p.omega_c);
-
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for(j = 0; j < max_index; j++)
     {
-//      gamma = start + j*step;
       gamma = arr[j];
-//      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
-      gamma_omratio_array[i][j] = 0.;
+      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
     }
       printf("\nrow: %d", i);
   }
