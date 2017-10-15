@@ -277,7 +277,7 @@ double spline_plotter(struct params p)
     for(j = 0; j < max_index; j++)
     {
       gamma = arr[j];
-      if(gamma < 5. && p.omega/p.omega_c > 10.)
+      if(gamma < 5. && p.omega/p.omega_c > 100.)
       {
         gamma_omratio_array[i][j] = 0.;
       }
