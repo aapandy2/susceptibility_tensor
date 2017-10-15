@@ -3,6 +3,7 @@
 #include "susceptibility_tensor.h"
 #include <time.h>
 #include <string.h>
+#include <stdlib.h>
 
 /*set_params: sets values for the constants (permittivity of free space,
  *            electron charge, electron mass, etc.) as well as the 
@@ -182,9 +183,13 @@ double plotter(struct params p)
 
 double spline_plotter(struct params p)
 {
+
+  int step_array_size = 271;
+
   char ch, buffer[1000];
-  int i = 0, arr[280], j = 0;
-  
+  int i = 0, j = 0;
+  float arr[step_array_size];  
+
   FILE *fs; 
  
   // Openning the file with file handler as fs
@@ -201,7 +206,7 @@ double spline_plotter(struct params p)
    	break;
    }
    
-   // If the delimiter is encounterd(which can be
+   // If the delimiter is encountered(which can be
    // anything according to your wish) then skip the character
    // and store the last read array of characters in
    // an integer array
@@ -209,9 +214,9 @@ double spline_plotter(struct params p)
    
    	// Converting the content of the buffer into
    	// an array position
-   	arr[j] = atoi(buffer);
+   	arr[j] = atof(buffer);
    
-   	// Increamenting the array position
+   	// Incrementing the array position
    	j++;
    
    	// Clearing the buffer, this function takes two
@@ -238,6 +243,12 @@ double spline_plotter(struct params p)
    	i++;
    }
     }
+
+//  for(i = 0; i < step_array_size; i++)
+//  {
+//    printf("\n%f", arr[i]);
+//  }
+
   
   FILE *fp;
   fp = fopen("chi_12_real_mod_step.txt", "w");
@@ -248,7 +259,7 @@ double spline_plotter(struct params p)
   j        = 0;
   double gamma = 1.;
 
-  int max_index = 280;
+  int max_index = step_array_size;
 
   p.tau_integrand = &chi_12_integrand;
   
@@ -266,7 +277,14 @@ double spline_plotter(struct params p)
     for(j = 0; j < max_index; j++)
     {
       gamma = arr[j];
-      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
+      if(gamma < 5. && p.omega/p.omega_c > 10.)
+      {
+        gamma_omratio_array[i][j] = 0.;
+      }
+      else
+      {
+        gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
+      }
     }
       printf("\nrow: %d", i);
   }
