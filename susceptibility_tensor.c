@@ -48,6 +48,7 @@ int set_params(struct params *p)
   p->gamma_cutoff = 1e10;       //currently unused
 
   p->pull_out_Df = 0;
+  p->use_spline  = 1;
  
   return 1;
 }
@@ -322,10 +323,10 @@ int main(void)
   p.real  = 1;
   
   /*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
-  spline_plotter(p);
+//  spline_plotter(p);
   
   /*print omega/omega_c	alpha_S(params)*/
-//  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
+  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
 //  p.tau_integrand = &chi_12_integrand;
 //  printf("\n%e    %e\n", p.omega/p.omega_c, gamma_integrand(1.1, &p));
 }

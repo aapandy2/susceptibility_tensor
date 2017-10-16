@@ -369,6 +369,11 @@ double gamma_integrator(struct params *params)
  */
 double chi_11(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return chi_11_spline(params);
+  }
+
   params->tau_integrand = &chi_11_integrand;
   params->gamma_integrand = &gamma_integrand;
   
@@ -383,6 +388,11 @@ double chi_11(struct params * params)
  */
 double chi_12(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return chi_12_spline(params);
+  }
+
   params->tau_integrand = &chi_12_integrand;
   params->gamma_integrand = &gamma_integrand;
   
@@ -397,6 +407,11 @@ double chi_12(struct params * params)
  */
 double chi_32(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return chi_32_spline(params);
+  }  
+
   params->tau_integrand = &chi_32_integrand;
   params->gamma_integrand = &gamma_integrand;
   
@@ -411,6 +426,11 @@ double chi_32(struct params * params)
  */
 double chi_13(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return chi_13_spline(params);
+  }
+
   params->tau_integrand = &chi_13_integrand;
   params->gamma_integrand = &gamma_integrand;
   
@@ -425,6 +445,11 @@ double chi_13(struct params * params)
  */
 double chi_22(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return chi_22_spline(params);
+  }
+
   double ans = 0.;
   params->gamma_integrand = &gamma_integrand;
   
@@ -452,6 +477,11 @@ double chi_22(struct params * params)
  */
 double chi_33(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return chi_33_spline(params);
+  }
+
   params->tau_integrand = &chi_33_integrand;
   params->gamma_integrand = &gamma_integrand;
   
@@ -466,6 +496,11 @@ double chi_33(struct params * params)
  */
 double chi_21(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return -chi_12_spline(params);
+  }
+
   return -chi_12(params);
 }
 
@@ -477,6 +512,11 @@ double chi_21(struct params * params)
  */
 double chi_23(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return -chi_32_spline(params);
+  }
+
   return -chi_32(params);
 }
 
@@ -488,5 +528,10 @@ double chi_23(struct params * params)
  */
 double chi_31(struct params * params)
 {
+  if(params->use_spline == 1)
+  {
+    return chi_13_spline(params);
+  }
+
   return chi_13(params);
 }

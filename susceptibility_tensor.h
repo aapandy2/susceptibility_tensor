@@ -24,7 +24,22 @@ struct params
         int pull_out_Df;
 	double (*tau_integrand)(double, void * parameters);
 	double (*gamma_integrand)(double, void * parameters);
+
+        int use_spline;
+        int component;
 };
+
+double spline_integrand(double gamma, double omratio, struct params * params);
+double chi_ij_spline_integrand(double gamma, struct params * params);
+double chi_ij_spline(struct params * params);
+double gauss_legendre_spline(double start, double end, struct params * params);
+double chi_11_spline(struct params * params);
+double chi_12_spline(struct params * params);
+double chi_32_spline(struct params * params);
+double chi_22_spline(struct params * params);
+double chi_13_spline(struct params * params);
+double chi_33_spline(struct params * params);
+
 
 double I_1_of_2(double alpha, double delta);
 double I_1_analytic(double alpha, double delta);
