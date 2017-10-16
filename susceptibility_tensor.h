@@ -21,6 +21,7 @@ struct params
         double gamma;
 	int real;
 	int dist;
+        int pull_out_Df;
 	double (*tau_integrand)(double, void * parameters);
 	double (*gamma_integrand)(double, void * parameters);
 };

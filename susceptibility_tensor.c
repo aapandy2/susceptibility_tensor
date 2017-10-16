@@ -46,7 +46,9 @@ int set_params(struct params *p)
   p->kappa       = 3.5;         //kappa index
   p->kappa_width = 10.;         //kappa width, like theta_e
   p->gamma_cutoff = 1e10;       //currently unused
-  
+
+  p->pull_out_Df = 0;
+ 
   return 1;
 }
 
@@ -183,6 +185,8 @@ double plotter(struct params p)
 
 double spline_plotter(struct params p)
 {
+
+  p.pull_out_Df = 1;
 
   int step_array_size = 271;
 
@@ -321,7 +325,7 @@ int main(void)
   spline_plotter(p);
   
   /*print omega/omega_c	alpha_S(params)*/
-//  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_Q(&p));
+//  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
 //  p.tau_integrand = &chi_12_integrand;
-//  printf("\n%e    %e\n", p.omega/p.omega_c, gamma_integrand(101., &p));
+//  printf("\n%e    %e\n", p.omega/p.omega_c, gamma_integrand(1.1, &p));
 }
