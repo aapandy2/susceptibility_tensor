@@ -282,14 +282,7 @@ double spline_plotter(struct params p)
     for(j = 0; j < max_index; j++)
     {
       gamma = arr[j];
-      if(gamma < 5. && p.omega/p.omega_c > 100.)
-      {
-        gamma_omratio_array[i][j] = 0.;
-      }
-      else
-      {
-        gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
-      }
+      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
     }
       printf("\nrow: %d", i);
   }
@@ -326,7 +319,7 @@ int main(void)
 //  spline_plotter(p);
   
   /*print omega/omega_c	alpha_S(params)*/
-  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
+//  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
 //  p.tau_integrand = &chi_12_integrand;
 //  printf("\n%e    %e\n", p.omega/p.omega_c, gamma_integrand(1.1, &p));
 }
