@@ -116,8 +116,8 @@ double gauss_legendre_spline(double start, double end, struct params * params)
   return sum;
 }
 
-//#define STEP_ARRAY_SIZE 271
-#define STEP_ARRAY_SIZE 200
+#define STEP_ARRAY_SIZE 271
+//#define STEP_ARRAY_SIZE 200
 double spline_integrand(double gamma, double omratio, struct params * params)
 {
   static int loaded_file = 0;
@@ -140,74 +140,74 @@ double spline_integrand(double gamma, double omratio, struct params * params)
 
   static double z_vals[STEP_ARRAY_SIZE * STEP_ARRAY_SIZE];
 
-  char fname[34]; //= "chi_12_real_step_n.txt";
-//  char fname[24];
+//  char fname[34]; //= "chi_12_real_step_n.txt";
+  char fname[36];
 
   /*choose file*/
   if(params->component == 11)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_11_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_11_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_11_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_11_imag_mod_step.txt");
     }
   }
   else if(params->component == 12)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_12_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_12_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_12_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_12_imag_mod_step.txt");
     }
   }
   else if(params->component == 13)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_13_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_13_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_13_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_13_imag_mod_step.txt");
     }
   }
   else if(params->component == 22)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_22_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_22_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_22_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_22_imag_mod_step.txt");
     }
   }
   else if(params->component == 32)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "chi_32_real_mod_step.txt");
+      strcpy(fname, "./datafiles/chi_32_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_32_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_32_imag_mod_step.txt");
     }
   }
   else if(params->component == 33)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_33_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_33_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_33_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_33_imag_mod_step.txt");
     }
   }
   else
