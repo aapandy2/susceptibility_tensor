@@ -25,7 +25,7 @@ int set_params(struct params *p)
   //parameters
   p->B       = 1.;          //background B strength
   p->n_e     = 1.;          //electron number density cm^-3
-  p->theta   = M_PI/3.;     //observer angle
+  p->theta   = 60. * M_PI/180.;     //observer angle
   
   //derived quantities
   p->omega_p = sqrt(p->n_e*p->e*p->e / (p->m * p->epsilon0));//plasma frequency    
@@ -167,15 +167,15 @@ double plotter(struct params p)
   fp = fopen("output.txt", "w");
   
   double start = 1.;
-  double end   = 1.01;
+  double end   = 100;
   double i     = start;
-  double step  = 0.00001;
+  double step  = 0.3;
   
   p.tau_integrand = &chi_12_integrand;
   
   while(i < end)
   {
-    fprintf(fp, "\n%e    %e", i, gamma_integrand(i, &p));
+    fprintf(fp, "\n%e    %e", i, gamma_integrand(i, p.omega, &p));
     printf("\n%e", i);
     i = i + step;
   }
@@ -256,7 +256,7 @@ double spline_plotter(struct params p)
 
   
   FILE *fp;
-  fp = fopen("chi_12_real_mod_step.txt", "w");
+  fp = fopen("chi_12_real_mod_step60.txt", "w");
 
  
   double start = 1.;
@@ -274,19 +274,28 @@ double spline_plotter(struct params p)
 
   printf("\narray is %d^2 in size\n", array_width);
 
+  double local_omega_c = p.omega_c;
+
+  #pragma omp parallel for schedule(dynamic) private(i, j)
   for(i = 0; i < max_index; i++)
   {
-    p.omega = arr[i] * p.omega_c;
-
-    #pragma omp parallel for
     for(j = 0; j < max_index; j++)
     {
-      gamma = arr[j];
-      gamma_omratio_array[i][j] = gamma_integrand(gamma, &p);
+
+//      if(arr[i] < 50.)
+//      {
+        gamma_omratio_array[i][j] = gamma_integrand(arr[j], arr[i] * local_omega_c, &p);
+//      }
+//      else
+//      {
+//        gamma_omratio_array[i][j] = 0.;
+//      }
+
     }
       printf("\nrow: %d", i);
   }
   printf("\n");
+
 
   for(i = 0; i < max_index; i++)
   {
@@ -316,7 +325,9 @@ int main(void)
   p.real  = 1;
   
   /*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
-//  spline_plotter(p);
+//  p.pull_out_Df = 1;
+//  plotter(p);
+  spline_plotter(p);
   
   /*print omega/omega_c	alpha_S(params)*/
 //  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));

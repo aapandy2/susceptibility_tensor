@@ -6,6 +6,15 @@
 #include "susceptibility_tensor.h"
 # include <omp.h>
 
+double gamma_integrand_gsl(double gamma, void * parameters)
+{
+  struct params * params = (struct params*) parameters;
+
+  double omega = params->omega;
+
+  return gamma_integrand(gamma, omega, parameters);
+}
+
 /*gamma_integrand: integrator for the first integral (the tau integral) for the
  *                components of the susceptibility tensor.  The chi_33 integral
  *                is faster when we use a fixed-order Gaussian quadrature
@@ -18,7 +27,7 @@
  *@returns: numerically evaluated tau integral at a given gamma of a given
  *          component of the susceptibility tensor
  */
-double gamma_integrand(double gamma, void * parameters)
+double gamma_integrand(double gamma, double omega, void * parameters)
 {
   struct params * params = (struct params*) parameters;
   
@@ -70,7 +79,7 @@ double gamma_integrand(double gamma, void * parameters)
 //	params-> gamma = gamma;
   struct params tau_params = *params;
   tau_params.gamma = gamma;
-  
+  tau_params.omega = omega;
   
   gsl_set_error_handler_off();
   gsl_function F;
@@ -144,7 +153,7 @@ double midpoint_rule(struct params *params, double start,
   for(i = 0; i < n; i++ )
   {
     x = (b - a)/n * i + a;
-    total = total + gamma_integrand(x, params);
+    total = total + gamma_integrand(x, params->omega, params);
   }
 
   total = (b - a) / n * total;
@@ -190,7 +199,7 @@ double gauss_legendre(struct params * params, double start, double end)
     x        = quadPts[i];
     weight   = weights[i];
 
-    sum = sum + (end - start)/2. * gamma_integrand((end - start)/2. * x + (end + start)/2., params)
+    sum = sum + (end - start)/2. * gamma_integrand((end - start)/2. * x + (end + start)/2., params->omega, params)
                       * weight;
   }
 
@@ -225,16 +234,16 @@ double simpsons_rule(struct params * params, double start, double end,
   {
     if(i%2==0)
     {
-      total = total + 2. * gamma_integrand(lower_limit + i*h, params);
+      total = total + 2. * gamma_integrand(lower_limit + i*h, params->omega, params);
     }
     else
     {
-      total = total + 4. * gamma_integrand(lower_limit + i*h, params);
+      total = total + 4. * gamma_integrand(lower_limit + i*h, params->omega, params);
     }
   }
 
-  sum = h/3 * (gamma_integrand(lower_limit, params) 
-        + gamma_integrand(upper_limit, params) + total);
+  sum = h/3 * (gamma_integrand(lower_limit, params->omega, params) 
+        + gamma_integrand(upper_limit, params->omega, params) + total);
 
   return sum;
 }
@@ -298,7 +307,7 @@ double end_approx(struct params *params)
 double gsl_integrator(struct params *params, double start, double end)
 {
   gsl_function F;
-  F.function = params->gamma_integrand;
+  F.function = gamma_integrand_gsl;
   F.params   = params;
   
   gsl_integration_workspace * w = gsl_integration_workspace_alloc(5000);
@@ -371,7 +380,7 @@ double chi_11(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return chi_11_spline(params);
+  //  return chi_11_spline(params);
   }
 
   params->tau_integrand = &chi_11_integrand;
@@ -390,7 +399,7 @@ double chi_12(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return chi_12_spline(params);
+  //  return chi_12_spline(params);
   }
 
   params->tau_integrand = &chi_12_integrand;
@@ -409,7 +418,7 @@ double chi_32(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return chi_32_spline(params);
+  //  return chi_32_spline(params);
   }  
 
   params->tau_integrand = &chi_32_integrand;
@@ -428,7 +437,7 @@ double chi_13(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return chi_13_spline(params);
+  //  return chi_13_spline(params);
   }
 
   params->tau_integrand = &chi_13_integrand;
@@ -447,7 +456,7 @@ double chi_22(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return chi_22_spline(params);
+  //  return chi_22_spline(params);
   }
 
   double ans = 0.;
@@ -479,7 +488,7 @@ double chi_33(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return chi_33_spline(params);
+  //  return chi_33_spline(params);
   }
 
   params->tau_integrand = &chi_33_integrand;
@@ -498,7 +507,7 @@ double chi_21(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return -chi_12_spline(params);
+  //  return -chi_12_spline(params);
   }
 
   return -chi_12(params);
@@ -514,7 +523,7 @@ double chi_23(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return -chi_32_spline(params);
+  //  return -chi_32_spline(params);
   }
 
   return -chi_32(params);
@@ -530,7 +539,7 @@ double chi_31(struct params * params)
 {
   if(params->use_spline == 1)
   {
-    return chi_13_spline(params);
+  //  return chi_13_spline(params);
   }
 
   return chi_13(params);

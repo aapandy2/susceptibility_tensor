@@ -23,7 +23,7 @@ struct params
 	int dist;
         int pull_out_Df;
 	double (*tau_integrand)(double, void * parameters);
-	double (*gamma_integrand)(double, void * parameters);
+	double (*gamma_integrand)(double, double, void * parameters);
 
         int use_spline;
         int component;
@@ -59,7 +59,7 @@ double chi_22_integrand_real(double tau_prime, void * parameters);
 
 double alpha_V_integrand(double tau_prime, void * parameters);
 
-double gamma_integrand(double gamma, void * parameters);
+double gamma_integrand(double gamma, double omega, void * parameters);
 double gamma_integrator(struct params * p);
 double end_approx(struct params * p);
 
