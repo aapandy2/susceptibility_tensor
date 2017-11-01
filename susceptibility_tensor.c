@@ -321,8 +321,8 @@ int main(void)
   
   /*set parameters*/
   set_params(&p);
-  p.omega = 1. * p.omega_c;
-  p.real  = 1;
+  p.omega = 1000. * p.omega_c;
+  p.real  = 0;
   
   /*print gamma	gamma_integrand(gamma) with the function plotter(params)*/
 //  p.pull_out_Df = 1;
@@ -330,7 +330,7 @@ int main(void)
   spline_plotter(p);
   
   /*print omega/omega_c	alpha_S(params)*/
-//  printf("\n%e    %e\n", p.omega/p.omega_c, alpha_V(&p));
+  printf("\n%e    %e\n", p.omega/p.omega_c, chi_33(&p));
 //  p.tau_integrand = &chi_12_integrand;
 //  printf("\n%e    %e\n", p.omega/p.omega_c, gamma_integrand(1.1, &p));
 }

@@ -116,8 +116,8 @@ double gauss_legendre_spline(double start, double end, struct params * params)
   return sum;
 }
 
-#define GAM_ARRAY_SIZE 200
-#define OM_ARRAY_SIZE 200
+#define STEP_ARRAY_SIZE 271
+//#define STEP_ARRAY_SIZE 200
 double spline_integrand(double gamma, double omratio, struct params * params)
 {
   static int loaded_file = 0;
@@ -132,88 +132,82 @@ double spline_integrand(double gamma, double omratio, struct params * params)
     past_component = params->component;
   }
 
+  char ch, buffer[1000];
+  int i = 0, j = 0;
+  static double arr[STEP_ARRAY_SIZE];
+
   double myvariable;
-  int i;
-  int j;
 
-  double gamstart = 1.;
-  double gamend   = 1000.;
-  double omstart  = 1.;
-  double omend    = 1000.;
-  double gamstep  = 5.;
-  double omstep   = 5.;
+  static double z_vals[STEP_ARRAY_SIZE * STEP_ARRAY_SIZE];
 
-  static double gamma_vals[GAM_ARRAY_SIZE];
-  static double om_vals[OM_ARRAY_SIZE];
-  static double z_vals[GAM_ARRAY_SIZE * OM_ARRAY_SIZE];
-
-  char fname[34]; //= "chi_12_real_step_n.txt";
+//  char fname[34]; //= "chi_12_real_step_n.txt";
+  char fname[36];
 
   /*choose file*/
   if(params->component == 11)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_11_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_11_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_11_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_11_imag_mod_step.txt");
     }
   }
   else if(params->component == 12)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_12_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_12_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_12_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_12_imag_mod_step.txt");
     }
   }
   else if(params->component == 13)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_13_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_13_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_13_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_13_imag_mod_step.txt");
     }
   }
   else if(params->component == 22)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_22_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_22_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_22_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_22_imag_mod_step.txt");
     }
   }
   else if(params->component == 32)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_32_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_32_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_32_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_32_imag_mod_step.txt");
     }
   }
   else if(params->component == 33)
   {
     if(params->real == 1)
     {
-      strcpy(fname, "./datafiles/chi_33_real_step_5.txt");
+      strcpy(fname, "./datafiles/chi_33_real_mod_step.txt");
     }
     else
     {
-      strcpy(fname, "./datafiles/chi_33_imag_step_5.txt");
+      strcpy(fname, "./datafiles/chi_33_imag_mod_step.txt");
     }
   }
   else
@@ -223,21 +217,75 @@ double spline_integrand(double gamma, double omratio, struct params * params)
 
     if(loaded_file == 0)
   {
-    for(i = 0; i < GAM_ARRAY_SIZE; i++)
-    {
-      gamma_vals[i] = gamstart + i*gamstep;
-      om_vals[i]    = omstart  + i*omstep;
+
+  FILE *fs; 
+ 
+  // Openning the file with file handler as fs
+  fs = fopen("step_array.txt", "r");
+  
+  // Read the file unless the file encounters an EOF
+  while(1)
+  {
+   // Reads the character where the seeker is currently
+   ch = fgetc(fs);
+   
+   // If EOF is encountered then break out of the while loop
+   if(ch == EOF){
+   	break;
+   }
+   
+   // If the delimiter is encountered(which can be
+   // anything according to your wish) then skip the character
+   // and store the last read array of characters in
+   // an integer array
+   else if(ch == ' '){
+   
+   	// Converting the content of the buffer into
+   	// an array position
+   	arr[j] = atof(buffer);
+   
+   	// Incrementing the array position
+   	j++;
+   
+   	// Clearing the buffer, this function takes two
+   	// arguments, one is a character pointer and 
+   	// the other one is the size of the character array
+   	bzero(buffer, 32);
+   
+   	// clearing the counter which counts the number
+   	// of character in each number used for reading
+   	// into the buffer.
+   	i = 0;
+   
+   	// then continue
+   	continue;
+   }
+   else{
+   
+   	// reads the current character in the buffer
+   	buffer[i] = ch;
+   
+   	// increamenting the counter so that the next
+   	// character is read in the next position in 
+   	// the array of buffer
+   	i++;
+   }
     }
+
+//  for(i = 0; i < STEP_ARRAY_SIZE; i++)
+//  {
+//    printf("\n%f", arr[i]);
+//  }
 
     FILE *myfile;
     myfile=fopen(fname, "r");
 
-    for(i = 0; i < GAM_ARRAY_SIZE; i++)
+    for(i = 0; i < STEP_ARRAY_SIZE; i++)
     {
-      for (j = 0 ; j < OM_ARRAY_SIZE; j++)
+      for (j = 0 ; j < STEP_ARRAY_SIZE; j++)
       {
         fscanf(myfile,"%lf", &myvariable);
-        z_vals[j*GAM_ARRAY_SIZE + i] = myvariable;
+        z_vals[j*STEP_ARRAY_SIZE + i] = myvariable;
       }
     }
 
@@ -249,16 +297,14 @@ double spline_integrand(double gamma, double omratio, struct params * params)
 
 //  const gsl_interp2d_type *T = gsl_interp2d_bilinear;
   const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-  gsl_spline2d *spline = gsl_spline2d_alloc(T, GAM_ARRAY_SIZE, OM_ARRAY_SIZE);
+  gsl_spline2d *spline = gsl_spline2d_alloc(T, STEP_ARRAY_SIZE, STEP_ARRAY_SIZE);
   gsl_interp_accel *xacc = gsl_interp_accel_alloc();
   gsl_interp_accel *yacc = gsl_interp_accel_alloc();
 
   /* initialize interpolation */
-  gsl_spline2d_init(spline, gamma_vals, om_vals, z_vals, GAM_ARRAY_SIZE, OM_ARRAY_SIZE);
+  gsl_spline2d_init(spline, arr, arr, z_vals, STEP_ARRAY_SIZE, STEP_ARRAY_SIZE);
 
   double ans = gsl_spline2d_eval(spline, omratio, gamma, xacc, yacc);
-
-//printf("\n%e\n", ans);
 
   gsl_spline2d_free(spline);
   gsl_interp_accel_free(xacc);
